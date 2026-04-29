@@ -1,0 +1,47 @@
+name: flutter_app
+description: "A new Flutter project."
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.10.8
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  intl: ^0.20.2
+  cupertino_icons: ^1.0.8
+  google_fonts: ^6.2.1
+  lucide_icons: ^0.257.0
+  mobile_scanner: ^5.2.3
+  qr_flutter: ^4.1.0
+  shared_preferences: ^2.5.4
+  file_picker: ^8.0.0
+  http: ^1.2.0
+  excel: ^4.0.0
+  url_launcher: ^6.3.0
+  provider: ^6.1.2
+  syncfusion_flutter_pdf: ^28.2.12
+  video_player: ^2.11.1
+  chewie: ^1.13.1
+  syncfusion_flutter_pdfviewer: ^28.2.12
+  crypto: ^3.0.6
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+  flutter_launcher_icons: ^0.13.1
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/
+
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path_android: assets/app_icon.png
