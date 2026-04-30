@@ -1,6 +1,6 @@
 const String baseUrl = String.fromEnvironment(
   'BASE_URL',
-  defaultValue: 'http://localhost:3000',
+  defaultValue: 'https://collageapp-server-production.up.railway.app',
 );
 
 const bool offlineMode = bool.fromEnvironment(

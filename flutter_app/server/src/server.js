@@ -112,6 +112,7 @@ app.get('/', (_req, res) => {
 
 app.get('/health', async (_req, res) => {
   res.json({
+    status: 'ok',
     ok: mongoose.connection.readyState === 1,
     database: mongoose.connection.name || null,
     time: new Date().toISOString(),
