@@ -248,6 +248,33 @@ class ApiService {
     _emitChange();
   }
 
+  static Future<Map<String, dynamic>> _create(
+    String key,
+    Map<String, dynamic> row, {
+    bool requireOnline = true,
+  }) async {
+    final normalized = _mapOf(row);
+    if (!offlineMode && baseUrl.isNotEmpty) {
+      try {
+        final remoteRow = await _BackendStore.create(key, normalized);
+        _OfflineStore.putCachedRow(key, remoteRow);
+        _emitChange();
+        return remoteRow;
+      } catch (error) {
+        if (requireOnline) {
+          throw Exception(
+            'تعذر الحفظ على السيرفر. تحقق من الاتصال ثم حاول مرة أخرى. $error',
+          );
+        }
+      }
+    }
+
+    final rows = await _OfflineStore.list(key, () => <Map<String, dynamic>>[]);
+    rows.insert(0, normalized);
+    await _save(key, rows);
+    return normalized;
+  }
+
   static Map<String, dynamic> _normalizeStudent(Map<dynamic, dynamic> raw) {
     final code = (raw['studentCode'] ?? raw['code'] ?? raw['id'] ?? '')
         .toString();
@@ -597,27 +624,24 @@ class ApiService {
     required String message,
     required String levelId,
   }) async {
-    final rows = await _notifications();
-    rows.insert(0, {
+    await _create('notifications', {
       'id': _newId('notification'),
       'title': title,
       'message': message,
       'levelId': levelId,
       'timestamp': _nowIso(),
       'isRead': false,
-    });
-    await _save('notifications', rows);
+    }, requireOnline: false);
   }
 
   static Future<void> addAssignment(Map<String, dynamic> payload) async {
-    final rows = await _assignments();
     final fileName = (payload['fileName'] ?? 'assignment.pdf').toString();
     final pdfUrl = _offlineUrlFromBytes(
       payload['fileBytes'],
       fileName: fileName,
       fallback: (payload['pdfUrl'] ?? '').toString(),
     );
-    rows.insert(0, {
+    await _create('assignments', {
       ..._mapOf(payload),
       'id': _newId('assignment'),
       'pdfUrl': pdfUrl,
@@ -625,15 +649,18 @@ class ApiService {
       'fileName': fileName,
       'createdAt': payload['createdAt'] ?? _nowIso(),
     });
-    await _save('assignments', rows);
-    await addNotification(
-      title: 'New assignment: ${payload['title'] ?? ''}',
-      message: '${payload['subject'] ?? ''} - ${payload['deadline'] ?? ''}',
-      levelId: _levelId(
-        (payload['department'] ?? '').toString(),
-        (payload['level'] ?? '').toString(),
-      ),
-    );
+    try {
+      await addNotification(
+        title: 'New assignment: ${payload['title'] ?? ''}',
+        message: '${payload['subject'] ?? ''} - ${payload['deadline'] ?? ''}',
+        levelId: _levelId(
+          (payload['department'] ?? '').toString(),
+          (payload['level'] ?? '').toString(),
+        ),
+      );
+    } catch (error) {
+      debugPrint('Assignment notification failed: $error');
+    }
   }
 
   static Future<List<Map<String, dynamic>>> getAssignments({
@@ -649,7 +676,6 @@ class ApiService {
   }
 
   static Future<void> submitAssignment(Map<String, dynamic> payload) async {
-    final rows = await _submissions();
     final fileName =
         (payload['fileName'] ?? 'submission_${payload['studentCode']}.pdf')
             .toString();
@@ -658,14 +684,13 @@ class ApiService {
       fileName: fileName,
       fallback: (payload['fileUrl'] ?? '').toString(),
     );
-    rows.insert(0, {
+    await _create('submissions', {
       ..._mapOf(payload),
       'id': _newId('submission'),
       'fileUrl': fileUrl,
       'fileBytes': null,
       'submittedAt': payload['submittedAt'] ?? _nowIso(),
     });
-    await _save('submissions', rows);
   }
 
   static Future<List<Map<String, dynamic>>> getSubmissions(
@@ -716,7 +741,6 @@ class ApiService {
   }
 
   static Future<void> addLibraryBook(Map<String, dynamic> book) async {
-    final rows = await _libraryBooks();
     final fileName = (book['fileName'] ?? book['title'] ?? 'library-file')
         .toString();
     final url = _offlineUrlFromBytes(
@@ -724,7 +748,7 @@ class ApiService {
       fileName: fileName,
       fallback: (book['url'] ?? '').toString(),
     );
-    rows.insert(0, {
+    await _create('library', {
       ..._mapOf(book),
       'id': _newId('library'),
       'url': url,
@@ -732,12 +756,15 @@ class ApiService {
       'fileName': fileName,
       'createdAt': book['createdAt'] ?? _nowIso(),
     });
-    await _save('library', rows);
-    await addNotification(
-      title: 'New library item',
-      message: (book['title'] ?? '').toString(),
-      levelId: '',
-    );
+    try {
+      await addNotification(
+        title: 'New library item',
+        message: (book['title'] ?? '').toString(),
+        levelId: '',
+      );
+    } catch (error) {
+      debugPrint('Library notification failed: $error');
+    }
   }
 
   static Future<void> deleteLibraryBook(String id) async {
@@ -960,7 +987,6 @@ class ApiService {
     String role,
     String content,
   ) async {
-    final rows = await _messages();
     final message = {
       'id': _newId('message'),
       'levelId': levelId,
@@ -972,9 +998,7 @@ class ApiService {
       'studentRead': role == 'student',
       'teacherRead': role == 'teacher',
     };
-    rows.add(message);
-    await _save('messages', rows);
-    return message;
+    return _create('messages', message);
   }
 
   static Future<int> getUnreadCount(
@@ -1588,6 +1612,22 @@ class _OfflineStore {
     }
   }
 
+  static void putCachedRow(String name, Map<String, dynamic> row) {
+    final normalized = Map<String, dynamic>.from(row);
+    final rows = _cache[name] ?? <Map<String, dynamic>>[];
+    final id = (normalized['id'] ?? normalized['_id'] ?? '').toString();
+    final index = rows.indexWhere((item) {
+      return (item['id'] ?? item['_id'] ?? '').toString() == id;
+    });
+    if (index == -1) {
+      rows.insert(0, normalized);
+    } else {
+      rows[index] = normalized;
+    }
+    _cache[name] = rows;
+    _encodedCache[name] = jsonEncode(rows);
+  }
+
   static String _key(String name) => 'offline_api_$name';
 
   static List<Map<String, dynamic>> _toLightweightRows(
@@ -1623,7 +1663,7 @@ class _OfflineStore {
 }
 
 class _BackendStore {
-  static const Duration _timeout = Duration(seconds: 8);
+  static const Duration _timeout = Duration(seconds: 30);
 
   static Future<List<Map<String, dynamic>>> list(String name) async {
     final response = await http
@@ -1648,6 +1688,25 @@ class _BackendStore {
         )
         .timeout(_timeout);
     _throwIfBad(response);
+  }
+
+  static Future<Map<String, dynamic>> create(
+    String name,
+    Map<String, dynamic> row,
+  ) async {
+    final response = await http
+        .post(
+          Uri.parse('$baseUrl/api/$name'),
+          headers: const {'Content-Type': 'application/json'},
+          body: jsonEncode(row),
+        )
+        .timeout(_timeout);
+    _throwIfBad(response);
+    final decoded = jsonDecode(response.body);
+    if (decoded is Map) {
+      return decoded.map((key, value) => MapEntry(key.toString(), value));
+    }
+    return row;
   }
 
   static void _throwIfBad(http.Response response) {

@@ -100,7 +100,7 @@ function clientError(message, status = 400) {
 }
 
 app.use(cors({ origin: corsOrigin }));
-app.use(express.json({ limit: '25mb' }));
+app.use(express.json({ limit: '100mb' }));
 app.use(morgan('dev'));
 
 app.get('/', (_req, res) => {

@@ -28,7 +28,6 @@ class LevelForumScreen extends StatefulWidget {
 class _LevelForumScreenState extends State<LevelForumScreen> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
-  bool _loading = true;
   bool _sending = false;
   List<Map<String, dynamic>> _messages = [];
 
@@ -40,7 +39,11 @@ class _LevelForumScreenState extends State<LevelForumScreen> {
   }
 
   Future<void> _markAsRead() async {
-    await ApiService.markMessagesAsRead(widget.levelId, widget.teacherId, widget.userRole);
+    await ApiService.markMessagesAsRead(
+      widget.levelId,
+      widget.teacherId,
+      widget.userRole,
+    );
   }
 
   @override
@@ -58,18 +61,18 @@ class _LevelForumScreenState extends State<LevelForumScreen> {
   }
 
   Future<void> _loadMessages() async {
-    setState(() => _loading = true);
     try {
-      final items = await ApiService.getLevelMessages(widget.levelId, teacherId: widget.teacherId);
+      final items = await ApiService.getLevelMessages(
+        widget.levelId,
+        teacherId: widget.teacherId,
+      );
       if (!mounted) return;
       setState(() {
         _messages = items;
-        _loading = false;
       });
       WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
     } catch (_) {
       if (!mounted) return;
-      setState(() => _loading = false);
     }
   }
 
@@ -106,7 +109,10 @@ class _LevelForumScreenState extends State<LevelForumScreen> {
       final theme = Theme.of(context);
       messenger.showSnackBar(
         SnackBar(
-          content: Text('تعذر إرسال الرسالة', style: GoogleFonts.cairo(color: theme.colorScheme.onError)),
+          content: Text(
+            'تعذر إرسال الرسالة',
+            style: GoogleFonts.cairo(color: theme.colorScheme.onError),
+          ),
           backgroundColor: theme.colorScheme.error,
         ),
       );
@@ -122,7 +128,9 @@ class _LevelForumScreenState extends State<LevelForumScreen> {
     final content = (msg['content'] ?? '').toString();
     final timestamp = (msg['timestamp'] ?? 0) as int;
 
-    final bubbleColor = isMe ? theme.colorScheme.primary : theme.colorScheme.surface;
+    final bubbleColor = isMe
+        ? theme.colorScheme.primary
+        : theme.colorScheme.surface;
     final textColor = isMe ? Colors.white : theme.textTheme.bodyLarge?.color;
     final metaColor = isMe ? Colors.white70 : theme.textTheme.bodySmall?.color;
 
@@ -131,7 +139,9 @@ class _LevelForumScreenState extends State<LevelForumScreen> {
       child: Align(
         alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
         child: ConstrainedBox(
-          constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.78),
+          constraints: BoxConstraints(
+            maxWidth: MediaQuery.of(context).size.width * 0.78,
+          ),
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             decoration: BoxDecoration(
@@ -144,15 +154,27 @@ class _LevelForumScreenState extends State<LevelForumScreen> {
               children: [
                 if (!isMe)
                   Text(
-                    role == 'teacher' ? 'المعلم: $senderName' : 'طالب: $senderName',
-                    style: GoogleFonts.cairo(fontSize: 12, fontWeight: FontWeight.bold, color: metaColor),
+                    role == 'teacher'
+                        ? 'المعلم: $senderName'
+                        : 'طالب: $senderName',
+                    style: GoogleFonts.cairo(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: metaColor,
+                    ),
                   ),
                 if (!isMe) const SizedBox(height: 4),
-                Text(content, style: GoogleFonts.cairo(color: textColor, height: 1.4)),
+                Text(
+                  content,
+                  style: GoogleFonts.cairo(color: textColor, height: 1.4),
+                ),
                 const SizedBox(height: 6),
                 Align(
                   alignment: Alignment.centerLeft,
-                  child: Text(_formatTime(timestamp), style: GoogleFonts.cairo(fontSize: 11, color: metaColor)),
+                  child: Text(
+                    _formatTime(timestamp),
+                    style: GoogleFonts.cairo(fontSize: 11, color: metaColor),
+                  ),
                 ),
               ],
             ),
@@ -165,16 +187,24 @@ class _LevelForumScreenState extends State<LevelForumScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
     return Directionality(
       textDirection: TextDirection.rtl,
-      child: Scaffold(      
+      child: Scaffold(
         appBar: AppBar(
           title: Column(
             children: [
-              Text(widget.levelName, style: GoogleFonts.cairo(fontWeight: FontWeight.bold, fontSize: 16)),
-              Text('المعلم: ${widget.teacherName}', style: GoogleFonts.cairo(fontSize: 11, color: Colors.grey)),
+              Text(
+                widget.levelName,
+                style: GoogleFonts.cairo(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
+              Text(
+                'المعلم: ${widget.teacherName}',
+                style: GoogleFonts.cairo(fontSize: 11, color: Colors.grey),
+              ),
             ],
           ),
           leading: IconButton(
@@ -186,13 +216,21 @@ class _LevelForumScreenState extends State<LevelForumScreen> {
           children: [
             Expanded(
               child: StreamBuilder<List<Map<String, dynamic>>>(
-                stream: ApiService.getLevelMessagesStream(widget.levelId, teacherId: widget.teacherId),
+                stream: ApiService.getLevelMessagesStream(
+                  widget.levelId,
+                  teacherId: widget.teacherId,
+                ),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(child: CircularProgressIndicator());
                   }
                   if (snapshot.hasError) {
-                    return Center(child: Text('خطأ في تحميل الرسائل', style: GoogleFonts.cairo()));
+                    return Center(
+                      child: Text(
+                        'خطأ في تحميل الرسائل',
+                        style: GoogleFonts.cairo(),
+                      ),
+                    );
                   }
 
                   final messages = snapshot.data ?? [];
@@ -201,16 +239,27 @@ class _LevelForumScreenState extends State<LevelForumScreen> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(LucideIcons.messagesSquare, size: 64, color: theme.colorScheme.primary.withValues(alpha: 0.2)),
+                          Icon(
+                            LucideIcons.messagesSquare,
+                            size: 64,
+                            color: theme.colorScheme.primary.withValues(
+                              alpha: 0.2,
+                            ),
+                          ),
                           const SizedBox(height: 16),
-                          Text('لا توجد رسائل بعد. ابدأ المحادثة!', style: GoogleFonts.cairo(color: Colors.grey)),
+                          Text(
+                            'لا توجد رسائل بعد. ابدأ المحادثة!',
+                            style: GoogleFonts.cairo(color: Colors.grey),
+                          ),
                         ],
                       ),
                     );
                   }
 
                   // Scroll to bottom when new messages arrive
-                  WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
+                  WidgetsBinding.instance.addPostFrameCallback(
+                    (_) => _scrollToBottom(),
+                  );
 
                   return ListView.builder(
                     controller: _scrollController,
@@ -240,13 +289,21 @@ class _LevelForumScreenState extends State<LevelForumScreen> {
                         controller: _messageController,
                         textInputAction: TextInputAction.send,
                         onSubmitted: (_) => _sendMessage(),
-                        style: GoogleFonts.cairo(color: theme.textTheme.bodyLarge?.color),
+                        style: GoogleFonts.cairo(
+                          color: theme.textTheme.bodyLarge?.color,
+                        ),
                         decoration: InputDecoration(
                           hintText: 'اكتب رسالة...',
-                          hintStyle: GoogleFonts.cairo(color: theme.textTheme.bodySmall?.color),
+                          hintStyle: GoogleFonts.cairo(
+                            color: theme.textTheme.bodySmall?.color,
+                          ),
                           filled: true,
-                          fillColor: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                          fillColor: theme.colorScheme.surfaceContainerHighest
+                              .withValues(alpha: 0.5),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 12,
+                          ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(14),
                             borderSide: BorderSide.none,
@@ -257,7 +314,12 @@ class _LevelForumScreenState extends State<LevelForumScreen> {
                     const SizedBox(width: 10),
                     IconButton(
                       onPressed: _sending ? null : _sendMessage,
-                      icon: Icon(LucideIcons.send, color: _sending ? Colors.grey : theme.colorScheme.primary),
+                      icon: Icon(
+                        LucideIcons.send,
+                        color: _sending
+                            ? Colors.grey
+                            : theme.colorScheme.primary,
+                      ),
                     ),
                   ],
                 ),
