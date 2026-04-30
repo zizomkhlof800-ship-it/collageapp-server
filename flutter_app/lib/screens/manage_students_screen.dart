@@ -67,6 +67,7 @@ class _ManageStudentsScreenState extends State<ManageStudentsScreen> {
             final status = (m['status'] ?? '').toString();
             final department = (m['department'] ?? '').toString();
             final level = (m['level'] ?? '').toString();
+            final allowedAccess = m['allowedAccess'] != false;
             final s = StudentInfo(
               name: name,
               code: code,
@@ -74,7 +75,7 @@ class _ManageStudentsScreenState extends State<ManageStudentsScreen> {
               department: department,
               level: level,
             );
-            if (code.isNotEmpty) _accessMap[code] = status.contains('مصرح');
+            if (code.isNotEmpty) _accessMap[code] = allowedAccess;
             return s;
           }).toList();
 
@@ -141,7 +142,9 @@ class _ManageStudentsScreenState extends State<ManageStudentsScreen> {
                 department: department,
                 level: level,
               );
-              if (code.isNotEmpty) _accessMap[code] = status.contains('مصرح');
+              if (code.isNotEmpty) {
+                _accessMap[code] = m['allowedAccess'] != false;
+              }
               return s;
             }).toList();
             _filterStudents();
@@ -998,8 +1001,7 @@ class _ManageStudentsScreenState extends State<ManageStudentsScreen> {
                                         const SizedBox(width: 6),
                                         Checkbox(
                                           value:
-                                              _accessMap[student.code] ??
-                                              student.status.contains('مصرح'),
+                                              _accessMap[student.code] ?? true,
                                           onChanged: (v) async {
                                             final next = v ?? false;
                                             final theme = Theme.of(context);

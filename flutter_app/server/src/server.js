@@ -197,6 +197,8 @@ app.patch('/api/:collection/:id', async (req, res, next) => {
       {
         $or: [
           { id },
+          { studentCode: id },
+          { code: id },
           mongoose.Types.ObjectId.isValid(id) ? { _id: id } : { _id: null },
         ],
       },
@@ -217,6 +219,8 @@ app.delete('/api/:collection/:id', async (req, res, next) => {
     const result = await Model.deleteOne({
       $or: [
         { id },
+        { studentCode: id },
+        { code: id },
         mongoose.Types.ObjectId.isValid(id) ? { _id: id } : { _id: null },
       ],
     });

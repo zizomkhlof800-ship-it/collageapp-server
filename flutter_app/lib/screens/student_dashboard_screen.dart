@@ -270,9 +270,8 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
             widget.studentCode,
         orElse: () => {},
       );
-      final status = (me['status'] ?? '').toString();
       setState(() {
-        _allowedAccess = status.contains('مصرح');
+        _allowedAccess = me['allowedAccess'] != false;
       });
     } catch (_) {
       setState(() {
