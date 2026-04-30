@@ -1103,8 +1103,14 @@ class ApiService {
 
   static Stream<List<Map<String, dynamic>>> getNotificationsStream(
     String levelId,
-  ) {
-    return _watchList(() => getNotifications(levelId: levelId));
+  ) async* {
+    if (!offlineMode && baseUrl.isNotEmpty) {
+      while (true) {
+        yield await getNotifications(levelId: levelId);
+        await Future<void>.delayed(const Duration(seconds: 10));
+      }
+    }
+    yield* _watchList(() => getNotifications(levelId: levelId));
   }
 
   static Stream<int> getTotalUnreadCountStream(String id, String role) {

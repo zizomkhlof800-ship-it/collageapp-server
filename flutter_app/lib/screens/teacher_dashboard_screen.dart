@@ -370,16 +370,11 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                   ? '${_selectedCourse!.department}__${_selectedCourse!.level}'
                   : '';
 
-              final newAnnouncement = Announcement(
-                id: '', // Will be set by API
+              await ApiService.addNotification(
                 title: titleController.text.trim(),
-                content: bodyController.text.trim(),
-                date: DateTime.now().toString().split(' ')[0],
-                priority: 'هام',
+                message: bodyController.text.trim(),
                 levelId: levelId,
               );
-
-              await _dataService.addAnnouncement(newAnnouncement);
 
               if (kDebugMode) {
                 print('--- Send Notification ---');
