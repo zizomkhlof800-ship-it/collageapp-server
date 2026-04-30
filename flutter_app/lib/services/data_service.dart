@@ -518,7 +518,7 @@ class DataService {
       'createdAt': DateTime.now().toIso8601String(),
     };
     await ApiService.addAssignment(payload);
-    await fetchAssignments(department: department, level: level);
+    unawaited(fetchAssignments(department: department, level: level));
   }
 
   Future<void> submitAssignment({
@@ -962,10 +962,8 @@ class DataService {
       fileName: fileName,
       fileBase64: fileBase64,
     );
-    await fetchMaterials(
-      department: department,
-      level: level,
-      subject: subject,
+    unawaited(
+      fetchMaterials(department: department, level: level, subject: subject),
     );
   }
 

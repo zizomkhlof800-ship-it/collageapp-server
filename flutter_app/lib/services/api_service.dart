@@ -285,6 +285,68 @@ class ApiService {
     return normalized;
   }
 
+  static Future<Map<String, dynamic>> _update(
+    String key,
+    String id,
+    Map<String, dynamic> patch,
+  ) async {
+    final normalized = _mapOf(patch);
+    if (!offlineMode && baseUrl.isNotEmpty) {
+      try {
+        final remoteRow = await _BackendStore.update(key, id, normalized);
+        _OfflineStore.putCachedRow(key, remoteRow);
+        _emitChange();
+        return remoteRow;
+      } catch (error) {
+        throw Exception(
+          'ØªØ¹Ø°Ø± ØªØ­Ø¯ÙŠØ« Ø¨ÙŠØ§Ù†Ø§Øª $key Ø¹Ù„Ù‰ Ø§Ù„Ø³ÙŠØ±ÙØ±: $error',
+        );
+      }
+    }
+
+    final rows = await _OfflineStore.list(key, () => <Map<String, dynamic>>[]);
+    final index = rows.indexWhere((row) {
+      return (row['id'] ??
+                  row['_id'] ??
+                  row['studentCode'] ??
+                  row['code'] ??
+                  '')
+              .toString() ==
+          id;
+    });
+    if (index == -1) return normalized;
+    rows[index] = {...rows[index], ...normalized, 'id': id};
+    await _save(key, rows);
+    return rows[index];
+  }
+
+  static Future<void> _delete(String key, String id) async {
+    if (!offlineMode && baseUrl.isNotEmpty) {
+      try {
+        await _BackendStore.delete(key, id);
+        _OfflineStore.removeCachedRow(key, id);
+        _emitChange();
+        return;
+      } catch (error) {
+        throw Exception(
+          'ØªØ¹Ø°Ø± Ø­Ø°Ù Ø¨ÙŠØ§Ù†Ø§Øª $key Ù…Ù† Ø§Ù„Ø³ÙŠØ±ÙØ±: $error',
+        );
+      }
+    }
+
+    final rows = await _OfflineStore.list(key, () => <Map<String, dynamic>>[]);
+    rows.removeWhere((row) {
+      return (row['id'] ??
+                  row['_id'] ??
+                  row['studentCode'] ??
+                  row['code'] ??
+                  '')
+              .toString() ==
+          id;
+    });
+    await _save(key, rows);
+  }
+
   static Map<String, dynamic> _normalizeStudent(Map<dynamic, dynamic> raw) {
     final code = (raw['studentCode'] ?? raw['code'] ?? raw['id'] ?? '')
         .toString();
@@ -659,25 +721,30 @@ class ApiService {
       'fileName': fileName,
       'createdAt': payload['createdAt'] ?? _nowIso(),
     });
-    try {
-      await addNotification(
+    unawaited(
+      addNotification(
         title: 'New assignment: ${payload['title'] ?? ''}',
         message: '${payload['subject'] ?? ''} - ${payload['deadline'] ?? ''}',
         levelId: _levelId(
           (payload['department'] ?? '').toString(),
           (payload['level'] ?? '').toString(),
         ),
-      );
-    } catch (error) {
-      debugPrint('Assignment notification failed: $error');
-    }
+      ).catchError(
+        (error) => debugPrint('Assignment notification failed: $error'),
+      ),
+    );
   }
 
   static Future<List<Map<String, dynamic>>> getAssignments({
     required String department,
     required String level,
   }) async {
-    final rows = await _assignments();
+    final rows = !offlineMode && baseUrl.isNotEmpty
+        ? await _BackendStore.list(
+            'assignments',
+            query: {'department': department, 'level': level},
+          )
+        : await _assignments();
     final filtered = rows.where((row) {
       return row['department'] == department && row['level'] == level;
     }).toList();
@@ -706,7 +773,12 @@ class ApiService {
   static Future<List<Map<String, dynamic>>> getSubmissions(
     String assignmentId,
   ) async {
-    final rows = await _submissions();
+    final rows = !offlineMode && baseUrl.isNotEmpty
+        ? await _BackendStore.list(
+            'submissions',
+            query: {'assignmentId': assignmentId},
+          )
+        : await _submissions();
     final filtered = rows
         .where((row) => row['assignmentId'] == assignmentId)
         .toList();
@@ -718,7 +790,12 @@ class ApiService {
     String assignmentId,
     String studentCode,
   ) async {
-    final rows = await _submissions();
+    final rows = !offlineMode && baseUrl.isNotEmpty
+        ? await _BackendStore.list(
+            'submissions',
+            query: {'assignmentId': assignmentId, 'studentCode': studentCode},
+          )
+        : await _submissions();
     try {
       return rows.firstWhere((row) {
         return row['assignmentId'] == assignmentId &&
@@ -734,6 +811,13 @@ class ApiService {
     double grade,
     String feedback,
   ) async {
+    if (!offlineMode && baseUrl.isNotEmpty) {
+      await _update('submissions', submissionId, {
+        'grade': grade,
+        'feedback': feedback,
+      });
+      return;
+    }
     final rows = await _submissions();
     final index = rows.indexWhere(
       (row) => (row['id'] ?? '').toString() == submissionId,
@@ -766,18 +850,22 @@ class ApiService {
       'fileName': fileName,
       'createdAt': book['createdAt'] ?? _nowIso(),
     });
-    try {
-      await addNotification(
+    unawaited(
+      addNotification(
         title: 'New library item',
         message: (book['title'] ?? '').toString(),
         levelId: '',
-      );
-    } catch (error) {
-      debugPrint('Library notification failed: $error');
-    }
+      ).catchError(
+        (error) => debugPrint('Library notification failed: $error'),
+      ),
+    );
   }
 
   static Future<void> deleteLibraryBook(String id) async {
+    if (!offlineMode && baseUrl.isNotEmpty) {
+      await _delete('library', id);
+      return;
+    }
     final rows = await _libraryBooks();
     rows.removeWhere((row) => (row['id'] ?? row['_id'] ?? '').toString() == id);
     await _save('library', rows);
@@ -786,7 +874,6 @@ class ApiService {
   static Future<Map<String, dynamic>> addAnnouncement(
     Map<String, dynamic> payload,
   ) async {
-    final rows = await _announcements();
     final id = _newId('announcement');
     final imageUrl = _offlineUrlFromBase64(
       payload['imageBase64'],
@@ -804,17 +891,27 @@ class ApiService {
       'comments': payload['comments'] ?? <Map<String, dynamic>>[],
       'createdAt': _nowIso(),
     };
-    rows.insert(0, row);
-    await _save('announcements', rows);
-    await addNotification(
-      title: 'New announcement: ${payload['title'] ?? ''}',
-      message: (payload['content'] ?? '').toString(),
-      levelId: (payload['levelId'] ?? '').toString(),
+    final saved = await _create('announcements', row);
+    unawaited(
+      addNotification(
+        title: 'New announcement: ${payload['title'] ?? ''}',
+        message: (payload['content'] ?? '').toString(),
+        levelId: (payload['levelId'] ?? '').toString(),
+      ).catchError(
+        (error) => debugPrint('Announcement notification failed: $error'),
+      ),
     );
-    return {'id': id, 'imageUrl': imageUrl};
+    return {
+      'id': (saved['id'] ?? id).toString(),
+      'imageUrl': (saved['imageUrl'] ?? imageUrl).toString(),
+    };
   }
 
   static Future<void> deleteAnnouncement(String id) async {
+    if (!offlineMode && baseUrl.isNotEmpty) {
+      await _delete('announcements', id);
+      return;
+    }
     final rows = await _announcements();
     rows.removeWhere((row) => (row['id'] ?? row['_id'] ?? '').toString() == id);
     await _save('announcements', rows);
@@ -836,7 +933,12 @@ class ApiService {
     String department,
     String level,
   ) async {
-    final rows = await _schedules();
+    final rows = !offlineMode && baseUrl.isNotEmpty
+        ? await _BackendStore.list(
+            'schedules',
+            query: {'department': department, 'level': level},
+          )
+        : await _schedules();
     return rows
         .where(
           (row) => row['department'] == department && row['level'] == level,
@@ -845,13 +947,11 @@ class ApiService {
   }
 
   static Future<void> addSchedule(Map<String, dynamic> payload) async {
-    final rows = await _schedules();
-    rows.insert(0, {
+    await _create('schedules', {
       ..._mapOf(payload),
       'id': (payload['id'] ?? _newId('schedule')).toString(),
       'uploadedAt': payload['uploadedAt'] ?? _nowIso(),
     });
-    await _save('schedules', rows);
   }
 
   static Future<void> addScheduleImage(
@@ -877,6 +977,10 @@ class ApiService {
   }
 
   static Future<void> deleteSchedule(String id) async {
+    if (!offlineMode && baseUrl.isNotEmpty) {
+      await _delete('schedules', id);
+      return;
+    }
     final rows = await _schedules();
     rows.removeWhere((row) => (row['id'] ?? row['_id'] ?? '').toString() == id);
     await _save('schedules', rows);
@@ -886,6 +990,10 @@ class ApiService {
     String id,
     Map<String, dynamic> payload,
   ) async {
+    if (!offlineMode && baseUrl.isNotEmpty) {
+      await _update('schedules', id, {..._mapOf(payload), 'id': id});
+      return;
+    }
     final rows = await _schedules();
     final index = rows.indexWhere(
       (row) => (row['id'] ?? row['_id'] ?? '').toString() == id,
@@ -900,7 +1008,14 @@ class ApiService {
     String level = '',
     String subject = '',
   }) async {
-    final rows = await _materials();
+    final query = <String, String>{
+      if (department.isNotEmpty) 'department': department,
+      if (level.isNotEmpty) 'level': level,
+      if (subject.isNotEmpty) 'subject': subject,
+    };
+    final rows = !offlineMode && baseUrl.isNotEmpty && query.isNotEmpty
+        ? await _BackendStore.list('materials', query: query)
+        : await _materials();
     return rows.where((row) {
       if (department.isNotEmpty && row['department'] != department) {
         return false;
@@ -919,9 +1034,8 @@ class ApiService {
     required String fileName,
     required String fileBase64,
   }) async {
-    final rows = await _materials();
     final id = _newId('material');
-    rows.insert(0, {
+    final row = await _create('materials', {
       'id': id,
       'url': _offlineUrlFromBase64(fileBase64, fileName: fileName),
       'originalName': fileName,
@@ -931,11 +1045,14 @@ class ApiService {
       'teacherName': teacherName,
       'uploadedAt': _nowIso(),
     });
-    await _save('materials', rows);
-    return id;
+    return (row['id'] ?? id).toString();
   }
 
   static Future<void> deleteMaterial(String id) async {
+    if (!offlineMode && baseUrl.isNotEmpty) {
+      await _delete('materials', id);
+      return;
+    }
     final rows = await _materials();
     rows.removeWhere((row) => (row['id'] ?? row['_id'] ?? '').toString() == id);
     await _save('materials', rows);
@@ -943,7 +1060,9 @@ class ApiService {
 
   static Future<Map<String, dynamic>> loginStudent(String studentCode) async {
     final code = studentCode.trim();
-    final rows = await _students();
+    final rows = !offlineMode && baseUrl.isNotEmpty
+        ? await _BackendStore.list('students', query: {'studentCode': code})
+        : await _students();
     final student = rows.firstWhere(
       (row) => (row['studentCode'] ?? row['code'] ?? '').toString() == code,
       orElse: () => <String, dynamic>{},
@@ -962,7 +1081,9 @@ class ApiService {
       return {'id': 'admin', 'username': 'admin', 'role': 'admin'};
     }
 
-    final rows = await _teachers();
+    final rows = !offlineMode && baseUrl.isNotEmpty
+        ? await _BackendStore.list('teachers', query: {'username': username})
+        : await _teachers();
     final teacher = rows.firstWhere(
       (row) =>
           row['username'] == username &&
@@ -1066,6 +1187,10 @@ class ApiService {
   }
 
   static Future<void> addTeacher(Map<String, dynamic> teacher) async {
+    if (!offlineMode && baseUrl.isNotEmpty) {
+      await _create('teachers', _normalizeTeacher(teacher));
+      return;
+    }
     final rows = await _teachers();
     rows.add(_normalizeTeacher(teacher));
     await _save('teachers', rows);
@@ -1075,6 +1200,10 @@ class ApiService {
     String id,
     Map<String, dynamic> teacher,
   ) async {
+    if (!offlineMode && baseUrl.isNotEmpty) {
+      await _update('teachers', id, _normalizeTeacher({...teacher, 'id': id}));
+      return;
+    }
     final rows = await _teachers();
     final index = rows.indexWhere(
       (row) => (row['id'] ?? row['_id'] ?? '').toString() == id,
@@ -1085,6 +1214,10 @@ class ApiService {
   }
 
   static Future<void> deleteTeacher(String id) async {
+    if (!offlineMode && baseUrl.isNotEmpty) {
+      await _delete('teachers', id);
+      return;
+    }
     final rows = await _teachers();
     rows.removeWhere((row) => (row['id'] ?? row['_id'] ?? '').toString() == id);
     await _save('teachers', rows);
@@ -1168,7 +1301,13 @@ class ApiService {
     String? department,
     String? level,
   }) async {
-    final rows = await _students();
+    final query = <String, String>{
+      if (department != null && department.isNotEmpty) 'department': department,
+      if (level != null && level.isNotEmpty) 'level': level,
+    };
+    final rows = !offlineMode && baseUrl.isNotEmpty && query.isNotEmpty
+        ? await _BackendStore.list('students', query: query)
+        : await _students();
     return rows
         .where((row) {
           if (department != null &&
@@ -1186,6 +1325,10 @@ class ApiService {
   }
 
   static Future<void> deleteStudent(String studentCode) async {
+    if (!offlineMode && baseUrl.isNotEmpty) {
+      await _delete('students', studentCode);
+      return;
+    }
     final rows = await _students();
     rows.removeWhere(
       (row) =>
@@ -1198,6 +1341,14 @@ class ApiService {
     String studentCode,
     Map<String, dynamic> student,
   ) async {
+    if (!offlineMode && baseUrl.isNotEmpty) {
+      await _update(
+        'students',
+        studentCode,
+        _normalizeStudent({...student, 'studentCode': studentCode}),
+      );
+      return;
+    }
     final rows = await _students();
     final index = rows.indexWhere(
       (row) =>
@@ -1213,6 +1364,10 @@ class ApiService {
   }
 
   static Future<void> setStudentAccess(String studentCode, bool allowed) async {
+    if (!offlineMode && baseUrl.isNotEmpty) {
+      await _update('students', studentCode, {'allowedAccess': allowed});
+      return;
+    }
     final rows = await _students();
     final index = rows.indexWhere(
       (row) =>
@@ -1245,6 +1400,10 @@ class ApiService {
   }
 
   static Future<void> addStudent(Map<String, dynamic> student) async {
+    if (!offlineMode && baseUrl.isNotEmpty) {
+      await _create('students', _normalizeStudent(student));
+      return;
+    }
     final rows = await _students();
     final normalized = _normalizeStudent(student);
     rows.add(normalized);
@@ -1258,22 +1417,30 @@ class ApiService {
   }
 
   static Future<String> addExam(Map<String, dynamic> payload) async {
-    final rows = await _exams();
     final id = _newId('exam');
-    rows.insert(0, {..._mapOf(payload), 'id': id, 'createdAt': _nowIso()});
-    await _save('exams', rows);
-    await addNotification(
-      title: 'New exam: ${payload['subject'] ?? ''}',
-      message: (payload['subject'] ?? '').toString(),
-      levelId: _levelId(
-        (payload['department'] ?? '').toString(),
-        (payload['level'] ?? '').toString(),
-      ),
+    final saved = await _create('exams', {
+      ..._mapOf(payload),
+      'id': id,
+      'createdAt': _nowIso(),
+    });
+    unawaited(
+      addNotification(
+        title: 'New exam: ${payload['subject'] ?? ''}',
+        message: (payload['subject'] ?? '').toString(),
+        levelId: _levelId(
+          (payload['department'] ?? '').toString(),
+          (payload['level'] ?? '').toString(),
+        ),
+      ).catchError((error) => debugPrint('Exam notification failed: $error')),
     );
-    return id;
+    return (saved['id'] ?? id).toString();
   }
 
   static Future<void> deleteExam(String id) async {
+    if (!offlineMode && baseUrl.isNotEmpty) {
+      await _delete('exams', id);
+      return;
+    }
     final rows = await _exams();
     rows.removeWhere((row) => (row['id'] ?? row['_id'] ?? '').toString() == id);
     await _save('exams', rows);
@@ -1283,6 +1450,10 @@ class ApiService {
     String id,
     Map<String, dynamic> payload,
   ) async {
+    if (!offlineMode && baseUrl.isNotEmpty) {
+      await _update('exams', id, {..._mapOf(payload), 'id': id});
+      return;
+    }
     final rows = await _exams();
     final index = rows.indexWhere(
       (row) => (row['id'] ?? row['_id'] ?? '').toString() == id,
@@ -1293,6 +1464,13 @@ class ApiService {
   }
 
   static Future<void> addQuestionToBank(Map<String, dynamic> question) async {
+    if (!offlineMode && baseUrl.isNotEmpty) {
+      await _create('question_bank', {
+        ..._mapOf(question),
+        'id': (question['id'] ?? _newId('question')).toString(),
+      });
+      return;
+    }
     final rows = await _questionBank();
     rows.add({
       ..._mapOf(question),
@@ -1307,7 +1485,15 @@ class ApiService {
     String? level,
     String? type,
   }) async {
-    final rows = await _questionBank();
+    final query = <String, String>{
+      if (subject != null && subject.isNotEmpty) 'subject': subject,
+      if (department != null && department.isNotEmpty) 'department': department,
+      if (level != null && level.isNotEmpty) 'level': level,
+      if (type != null && type.isNotEmpty) 'type': type,
+    };
+    final rows = !offlineMode && baseUrl.isNotEmpty && query.isNotEmpty
+        ? await _BackendStore.list('question_bank', query: query)
+        : await _questionBank();
     return rows.where((row) {
       if (subject != null && subject.isNotEmpty && row['subject'] != subject) {
         return false;
@@ -1331,7 +1517,16 @@ class ApiService {
     String levelId, {
     String? teacherId,
   }) async {
-    final rows = await _messages();
+    final rows = !offlineMode && baseUrl.isNotEmpty
+        ? await _BackendStore.list(
+            'messages',
+            query: {
+              'levelId': levelId,
+              if (teacherId != null && teacherId.isNotEmpty)
+                'teacherId': teacherId,
+            },
+          )
+        : await _messages();
     final filtered = rows.where((row) {
       if (row['levelId'] != levelId) {
         return false;
@@ -1352,6 +1547,10 @@ class ApiService {
   }
 
   static Future<void> deleteQuestionFromBank(String id) async {
+    if (!offlineMode && baseUrl.isNotEmpty) {
+      await _delete('question_bank', id);
+      return;
+    }
     final rows = await _questionBank();
     rows.removeWhere((row) => (row['id'] ?? row['_id'] ?? '').toString() == id);
     await _save('question_bank', rows);
@@ -1397,6 +1596,27 @@ class ApiService {
       'startedAt': _nowIso(),
     };
     _activeSessions[userId] = session;
+    if (!offlineMode && baseUrl.isNotEmpty) {
+      try {
+        final oldRows = await _BackendStore.list(
+          'live_sessions',
+          query: {'teacherId': userId, 'active': 'true'},
+        );
+        for (final row in oldRows) {
+          final rowId = (row['id'] ?? row['_id'] ?? '').toString();
+          if (rowId.isNotEmpty) {
+            await _BackendStore.update('live_sessions', rowId, {
+              'active': false,
+              'endedAt': _nowIso(),
+            });
+          }
+        }
+        final saved = await _create('live_sessions', session);
+        return saved;
+      } catch (_) {
+        rethrow;
+      }
+    }
     final rows = await _liveSessions();
     for (final row in rows) {
       final sameTeacher = (row['teacherId'] ?? '').toString() == userId;
@@ -1466,7 +1686,12 @@ class ApiService {
   }
 
   static Future<Map<String, dynamic>?> getActiveSession(String userId) async {
-    final liveSessions = await _liveSessions();
+    final liveSessions = !offlineMode && baseUrl.isNotEmpty
+        ? await _BackendStore.list(
+            'live_sessions',
+            query: {'teacherId': userId, 'active': 'true'},
+          )
+        : await _liveSessions();
     final now = DateTime.now().millisecondsSinceEpoch;
     for (final session in liveSessions) {
       final expiresAt =
@@ -1492,7 +1717,16 @@ class ApiService {
     required String levelId,
     required String subjectId,
   }) async {
-    final sessions = await _liveSessions();
+    final sessions = !offlineMode && baseUrl.isNotEmpty
+        ? await _BackendStore.list(
+            'live_sessions',
+            query: {
+              'levelId': levelId,
+              'subjectId': subjectId,
+              'active': 'true',
+            },
+          )
+        : await _liveSessions();
     final now = DateTime.now().millisecondsSinceEpoch;
     for (final session in sessions) {
       final expiresAt =
@@ -1631,6 +1865,21 @@ class _OfflineStore {
     _encodedCache[name] = jsonEncode(rows);
   }
 
+  static void removeCachedRow(String name, String id) {
+    final rows = _cache[name];
+    if (rows == null) return;
+    rows.removeWhere((item) {
+      return (item['id'] ??
+                  item['_id'] ??
+                  item['studentCode'] ??
+                  item['code'] ??
+                  '')
+              .toString() ==
+          id;
+    });
+    _encodedCache[name] = jsonEncode(rows);
+  }
+
   static String _key(String name) => 'offline_api_$name';
 
   static List<Map<String, dynamic>> _toLightweightRows(
@@ -1666,12 +1915,16 @@ class _OfflineStore {
 }
 
 class _BackendStore {
-  static const Duration _timeout = Duration(seconds: 30);
+  static const Duration _timeout = Duration(seconds: 12);
 
-  static Future<List<Map<String, dynamic>>> list(String name) async {
-    final response = await http
-        .get(Uri.parse('$baseUrl/api/$name'))
-        .timeout(_timeout);
+  static Future<List<Map<String, dynamic>>> list(
+    String name, {
+    Map<String, String> query = const {},
+  }) async {
+    final uri = Uri.parse(
+      '$baseUrl/api/$name',
+    ).replace(queryParameters: query.isEmpty ? null : query);
+    final response = await http.get(uri).timeout(_timeout);
     _throwIfBad(response);
     final decoded = jsonDecode(response.body);
     final items = decoded is Map ? decoded['items'] : decoded;
@@ -1710,6 +1963,33 @@ class _BackendStore {
       return decoded.map((key, value) => MapEntry(key.toString(), value));
     }
     return row;
+  }
+
+  static Future<Map<String, dynamic>> update(
+    String name,
+    String id,
+    Map<String, dynamic> patch,
+  ) async {
+    final response = await http
+        .patch(
+          Uri.parse('$baseUrl/api/$name/$id'),
+          headers: const {'Content-Type': 'application/json'},
+          body: jsonEncode(patch),
+        )
+        .timeout(_timeout);
+    _throwIfBad(response);
+    final decoded = jsonDecode(response.body);
+    if (decoded is Map) {
+      return decoded.map((key, value) => MapEntry(key.toString(), value));
+    }
+    return patch;
+  }
+
+  static Future<void> delete(String name, String id) async {
+    final response = await http
+        .delete(Uri.parse('$baseUrl/api/$name/$id'))
+        .timeout(_timeout);
+    _throwIfBad(response);
   }
 
   static void _throwIfBad(http.Response response) {

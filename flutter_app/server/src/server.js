@@ -88,7 +88,13 @@ function buildQuery(query) {
   for (const [key, value] of Object.entries(query)) {
     if (key === 'sort' || key === 'limit' || key === 'skip') continue;
     if (value === undefined || value === null || value === '') continue;
-    mongoQuery[key] = value;
+    if (value === 'true') {
+      mongoQuery[key] = true;
+    } else if (value === 'false') {
+      mongoQuery[key] = false;
+    } else {
+      mongoQuery[key] = value;
+    }
   }
   return mongoQuery;
 }
