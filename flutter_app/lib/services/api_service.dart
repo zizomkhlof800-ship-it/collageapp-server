@@ -31,8 +31,18 @@ class ApiService {
   }
 
   static Future<int?> dbHealthState() async {
-    await _OfflineStore.ensureReady();
-    return 1;
+    if (offlineMode || baseUrl.isEmpty) return null;
+    try {
+      final response = await http
+          .get(Uri.parse('$baseUrl/health'))
+          .timeout(const Duration(seconds: 4));
+      if (response.statusCode < 200 || response.statusCode >= 300) return null;
+      final decoded = jsonDecode(response.body);
+      if (decoded is Map && decoded['ok'] == true) return 1;
+    } catch (_) {
+      return null;
+    }
+    return null;
   }
 
   static void _emitChange() {
@@ -631,7 +641,7 @@ class ApiService {
       'levelId': levelId,
       'timestamp': _nowIso(),
       'isRead': false,
-    }, requireOnline: false);
+    });
   }
 
   static Future<void> addAssignment(Map<String, dynamic> payload) async {
@@ -1511,27 +1521,20 @@ class _OfflineStore {
     String name,
     List<Map<String, dynamic>> Function() seed,
   ) async {
-    await ensureReady();
     if (!offlineMode && baseUrl.isNotEmpty) {
       try {
         final remoteRows = await _BackendStore.list(name);
-        if (remoteRows.isNotEmpty) return remoteRows;
-
-        final seeded = seed()
+        _cache[name] = remoteRows
             .map((row) => Map<String, dynamic>.from(row))
             .toList();
-        if (seeded.isNotEmpty) {
-          await _BackendStore.save(name, seeded);
-          return seeded;
-        }
+        _encodedCache[name] = jsonEncode(_cache[name]);
         return remoteRows;
       } catch (error) {
-        debugPrint(
-          'Backend read failed for $name; using offline cache: $error',
-        );
+        throw Exception('تعذر تحميل بيانات $name من السيرفر: $error');
       }
     }
 
+    await ensureReady();
     final cached = _cache[name];
     if (cached != null) {
       return cached.map((row) => Map<String, dynamic>.from(row)).toList();
@@ -1570,7 +1573,6 @@ class _OfflineStore {
   }
 
   static Future<void> save(String name, List<Map<String, dynamic>> rows) async {
-    await ensureReady();
     final normalized = rows
         .map((row) => Map<String, dynamic>.from(row))
         .toList();
@@ -1581,10 +1583,11 @@ class _OfflineStore {
         _encodedCache[name] = jsonEncode(normalized);
         return;
       } catch (error) {
-        debugPrint('Backend save failed for $name; saving offline: $error');
+        throw Exception('تعذر حفظ بيانات $name على السيرفر: $error');
       }
     }
 
+    await ensureReady();
     final encoded = jsonEncode(normalized);
     if (_encodedCache[name] == encoded) {
       _cache[name] = normalized;
