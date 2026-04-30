@@ -102,6 +102,14 @@ app.use(cors({ origin: corsOrigin }));
 app.use(express.json({ limit: '25mb' }));
 app.use(morgan('dev'));
 
+app.get('/', (_req, res) => {
+  res.json({
+    ok: true,
+    name: 'CollageApp API',
+    health: '/health',
+  });
+});
+
 app.get('/health', async (_req, res) => {
   res.json({
     ok: mongoose.connection.readyState === 1,
