@@ -22,7 +22,8 @@ class StudentAttendanceScreen extends StatefulWidget {
   });
 
   @override
-  State<StudentAttendanceScreen> createState() => _StudentAttendanceScreenState();
+  State<StudentAttendanceScreen> createState() =>
+      _StudentAttendanceScreenState();
 }
 
 class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
@@ -73,7 +74,10 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
 
     if (lectureId.isEmpty) {
       messenger.showSnackBar(
-        SnackBar(content: Text('رمز غير صالح', style: GoogleFonts.cairo()), backgroundColor: Colors.red),
+        SnackBar(
+          content: Text('رمز غير صالح', style: GoogleFonts.cairo()),
+          backgroundColor: Colors.red,
+        ),
       );
       return;
     }
@@ -84,7 +88,10 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
     if (!isInRange) {
       messenger.showSnackBar(
         SnackBar(
-          content: Text('عذراً، يجب أن تكون داخل القاعة لتسجيل الحضور', style: GoogleFonts.cairo()),
+          content: Text(
+            'عذراً، يجب أن تكون داخل القاعة لتسجيل الحضور',
+            style: GoogleFonts.cairo(),
+          ),
           backgroundColor: Colors.red,
         ),
       );
@@ -95,7 +102,7 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
       final activeLevelId = '${widget.department}__${widget.level}';
       // In a real scenario, subjectId would come from the session data or QR payload
       // For mock, we'll assume a placeholder or match it from somewhere
-      final subjectId = 'MOCK-SUBJECT'; 
+      final subjectId = 'MOCK-SUBJECT';
       final teacherId = 'teacher-1'; // Mock teacher
 
       await ApiService.markAttendance(
@@ -130,20 +137,20 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: context.appBackground,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: context.appSurface,
         elevation: 0,
         centerTitle: true,
         title: Text(
           'مسح رمز الحضور',
           style: GoogleFonts.cairo(
-            color: AppColors.text,
+            color: context.appText,
             fontWeight: FontWeight.bold,
           ),
         ),
         leading: IconButton(
-          icon: const Icon(LucideIcons.arrowRight, color: AppColors.text),
+          icon: Icon(LucideIcons.arrowRight, color: context.appText),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -157,7 +164,7 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
               'وجه الكاميرا نحو رمز QR المعروض في القاعة للتسجيل حضورك',
               style: GoogleFonts.cairo(
                 fontSize: 14,
-                color: AppColors.textLight,
+                color: context.appTextLight,
               ),
               textAlign: TextAlign.center,
             ),
@@ -169,10 +176,12 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
               decoration: BoxDecoration(
                 color: Colors.black,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.grey[200]!),
+                border: Border.all(color: context.appBorder),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.03),
+                    color: Colors.black.withValues(
+                      alpha: context.isDarkMode ? 0.18 : 0.03,
+                    ),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -190,7 +199,8 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
                           for (final barcode in barcodes) {
                             if (barcode.rawValue != null) {
                               _handleAttendance(barcode.rawValue!);
-                              _cameraController.stop(); // Stop scanning after success
+                              _cameraController
+                                  .stop(); // Stop scanning after success
                               break;
                             }
                           }
@@ -201,7 +211,11 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(LucideIcons.scanLine, size: 48, color: Colors.grey[400]),
+                            Icon(
+                              LucideIcons.scanLine,
+                              size: 48,
+                              color: Colors.grey[400],
+                            ),
                             const SizedBox(height: 16),
                             ElevatedButton.icon(
                               onPressed: () {
@@ -212,12 +226,17 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
                               icon: const Icon(LucideIcons.camera, size: 18),
                               label: Text(
                                 'السماح باستخدام الكاميرا',
-                                style: GoogleFonts.cairo(fontWeight: FontWeight.bold),
+                                style: GoogleFonts.cairo(
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppColors.primary,
                                 foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 24,
+                                  vertical: 12,
+                                ),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(8),
                                 ),
@@ -226,7 +245,7 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
                           ],
                         ),
                       ),
-                    
+
                     // Overlay Guide
                     if (_isCameraPermissionGranted)
                       Center(
@@ -234,7 +253,10 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
                           width: 200,
                           height: 200,
                           decoration: BoxDecoration(
-                            border: Border.all(color: AppColors.primary, width: 2),
+                            border: Border.all(
+                              color: AppColors.primary,
+                              width: 2,
+                            ),
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
@@ -243,7 +265,7 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
                 ),
               ),
             ),
-            
+
             const SizedBox(height: 32),
 
             // Manual Entry Section
@@ -252,7 +274,7 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
               style: GoogleFonts.cairo(
                 fontWeight: FontWeight.bold,
                 fontSize: 16,
-                color: AppColors.text,
+                color: context.appText,
               ),
               textAlign: TextAlign.center,
             ),
@@ -260,7 +282,7 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
               'في حالة تعذر مسح الرمز، اطلب رمز الجلسة من المحاضر',
               style: GoogleFonts.cairo(
                 fontSize: 12,
-                color: AppColors.textLight,
+                color: context.appTextLight,
               ),
               textAlign: TextAlign.center,
             ),
@@ -270,11 +292,15 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
               children: [
                 // Register Button
                 ElevatedButton(
-                  onPressed: () => _handleAttendance(_codeController.text.trim()),
+                  onPressed: () =>
+                      _handleAttendance(_codeController.text.trim()),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 16,
+                    ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -295,7 +321,7 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
                       hintText: 'أدخل رمز الجلسة هنا...',
                       hintStyle: GoogleFonts.cairo(color: Colors.grey[400]),
                       filled: true,
-                      fillColor: Colors.white,
+                      fillColor: context.appSurface,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide(color: Colors.grey[200]!),
@@ -308,7 +334,10 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
                         borderRadius: BorderRadius.circular(12),
                         borderSide: const BorderSide(color: AppColors.primary),
                       ),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 16,
+                      ),
                     ),
                   ),
                 ),

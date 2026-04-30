@@ -185,18 +185,18 @@ class _AnnouncementDetailScreenState extends State<AnnouncementDetailScreen> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: const Color(0xFFF8F9FA),
+        backgroundColor: context.appBackground,
         appBar: AppBar(
-          backgroundColor: Colors.white,
+          backgroundColor: context.appSurface,
           elevation: 0,
           leading: IconButton(
-            icon: const Icon(LucideIcons.arrowRight, color: AppColors.text),
+            icon: Icon(LucideIcons.arrowRight, color: context.appText),
             onPressed: () => Navigator.pop(context),
           ),
           title: Text(
             'تفاصيل الإعلان',
             style: GoogleFonts.cairo(
-              color: AppColors.text,
+              color: context.appText,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -207,7 +207,7 @@ class _AnnouncementDetailScreenState extends State<AnnouncementDetailScreen> {
             ? Center(
                 child: Text(
                   'تعذر تحميل الإعلان',
-                  style: GoogleFonts.cairo(color: AppColors.textLight),
+                  style: GoogleFonts.cairo(color: context.appTextLight),
                 ),
               )
             : _buildContent(),
@@ -228,11 +228,13 @@ class _AnnouncementDetailScreenState extends State<AnnouncementDetailScreen> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: context.appSurface,
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.03),
+                  color: Colors.black.withValues(
+                    alpha: context.isDarkMode ? 0.18 : 0.03,
+                  ),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),
@@ -247,14 +249,17 @@ class _AnnouncementDetailScreenState extends State<AnnouncementDetailScreen> {
                   style: GoogleFonts.cairo(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.text,
+                    color: context.appText,
                   ),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   a['content'] ?? '',
                   textAlign: TextAlign.right,
-                  style: GoogleFonts.cairo(fontSize: 14, color: AppColors.text),
+                  style: GoogleFonts.cairo(
+                    fontSize: 14,
+                    color: context.appText,
+                  ),
                 ),
                 if ((a['imageUrl'] ?? '').toString().isNotEmpty) ...[
                   const SizedBox(height: 12),
@@ -305,7 +310,7 @@ class _AnnouncementDetailScreenState extends State<AnnouncementDetailScreen> {
                         ),
                         Text(
                           '${likes.length}',
-                          style: GoogleFonts.cairo(color: AppColors.text),
+                          style: GoogleFonts.cairo(color: context.appText),
                         ),
                       ],
                     ),
@@ -335,11 +340,13 @@ class _AnnouncementDetailScreenState extends State<AnnouncementDetailScreen> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: context.appSurface,
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.03),
+                  color: Colors.black.withValues(
+                    alpha: context.isDarkMode ? 0.18 : 0.03,
+                  ),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),
@@ -358,7 +365,7 @@ class _AnnouncementDetailScreenState extends State<AnnouncementDetailScreen> {
                   Text(
                     'لا توجد تعليقات بعد',
                     textAlign: TextAlign.right,
-                    style: GoogleFonts.cairo(color: AppColors.textLight),
+                    style: GoogleFonts.cairo(color: context.appTextLight),
                   )
                 else
                   ...comments.map((c) {

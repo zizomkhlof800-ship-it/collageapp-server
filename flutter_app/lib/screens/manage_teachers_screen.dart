@@ -76,7 +76,10 @@ class _ManageTeachersScreenState extends State<ManageTeachersScreen> {
     final theme = Theme.of(context);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message, style: GoogleFonts.cairo(color: theme.colorScheme.onError)),
+        content: Text(
+          message,
+          style: GoogleFonts.cairo(color: theme.colorScheme.onError),
+        ),
         backgroundColor: theme.colorScheme.error,
       ),
     );
@@ -98,10 +101,27 @@ class _ManageTeachersScreenState extends State<ManageTeachersScreen> {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: theme.colorScheme.surface,
-        title: Text('تأكيد الحذف', style: GoogleFonts.cairo(fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface)),
-        content: Text('هل أنت متأكد من حذف حساب المعلم ${teacher.username}؟', style: GoogleFonts.cairo(color: theme.colorScheme.onSurface)),
+        title: Text(
+          'تأكيد الحذف',
+          style: GoogleFonts.cairo(
+            fontWeight: FontWeight.bold,
+            color: theme.colorScheme.onSurface,
+          ),
+        ),
+        content: Text(
+          'هل أنت متأكد من حذف حساب المعلم ${teacher.username}؟',
+          style: GoogleFonts.cairo(color: theme.colorScheme.onSurface),
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: Text('إلغاء', style: GoogleFonts.cairo(color: theme.colorScheme.onSurfaceVariant))),
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(
+              'إلغاء',
+              style: GoogleFonts.cairo(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
           TextButton(
             onPressed: () async {
               Navigator.pop(context, true);
@@ -113,7 +133,13 @@ class _ManageTeachersScreenState extends State<ManageTeachersScreen> {
                 _showErrorSnackBar('تعذر حذف حساب المعلم');
               }
             },
-            child: Text('حذف', style: GoogleFonts.cairo(color: Colors.red, fontWeight: FontWeight.bold)),
+            child: Text(
+              'حذف',
+              style: GoogleFonts.cairo(
+                color: Colors.red,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
         ],
       ),
@@ -122,8 +148,12 @@ class _ManageTeachersScreenState extends State<ManageTeachersScreen> {
 
   Future<void> _addOrEditTeacher([Teacher? teacher]) async {
     final isEdit = teacher != null;
-    final usernameController = TextEditingController(text: teacher?.username ?? '');
-    final passwordController = TextEditingController(text: teacher?.password ?? '');
+    final usernameController = TextEditingController(
+      text: teacher?.username ?? '',
+    );
+    final passwordController = TextEditingController(
+      text: teacher?.password ?? '',
+    );
     List<Course> selectedCourses = isEdit ? List.from(teacher.courses) : [];
     final theme = Theme.of(context);
 
@@ -134,7 +164,10 @@ class _ManageTeachersScreenState extends State<ManageTeachersScreen> {
           backgroundColor: theme.colorScheme.surface,
           title: Text(
             isEdit ? 'تعديل بيانات معلم' : 'إضافة معلم جديد',
-            style: GoogleFonts.cairo(fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface),
+            style: GoogleFonts.cairo(
+              fontWeight: FontWeight.bold,
+              color: theme.colorScheme.onSurface,
+            ),
           ),
           content: SingleChildScrollView(
             child: Column(
@@ -145,7 +178,9 @@ class _ManageTeachersScreenState extends State<ManageTeachersScreen> {
                   style: GoogleFonts.cairo(color: theme.colorScheme.onSurface),
                   decoration: InputDecoration(
                     labelText: 'اسم المستخدم',
-                    labelStyle: GoogleFonts.cairo(color: theme.colorScheme.onSurfaceVariant),
+                    labelStyle: GoogleFonts.cairo(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
                     border: const OutlineInputBorder(),
                   ),
                 ),
@@ -155,7 +190,9 @@ class _ManageTeachersScreenState extends State<ManageTeachersScreen> {
                   style: GoogleFonts.cairo(color: theme.colorScheme.onSurface),
                   decoration: InputDecoration(
                     labelText: 'كلمة المرور',
-                    labelStyle: GoogleFonts.cairo(color: theme.colorScheme.onSurfaceVariant),
+                    labelStyle: GoogleFonts.cairo(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
                     border: const OutlineInputBorder(),
                   ),
                   obscureText: true,
@@ -164,9 +201,18 @@ class _ManageTeachersScreenState extends State<ManageTeachersScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('المواد والفرق الدراسية:', style: GoogleFonts.cairo(fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface)),
+                    Text(
+                      'المواد والفرق الدراسية:',
+                      style: GoogleFonts.cairo(
+                        fontWeight: FontWeight.bold,
+                        color: theme.colorScheme.onSurface,
+                      ),
+                    ),
                     IconButton(
-                      icon: Icon(LucideIcons.plusCircle, color: theme.colorScheme.primary),
+                      icon: Icon(
+                        LucideIcons.plusCircle,
+                        color: theme.colorScheme.primary,
+                      ),
                       onPressed: () async {
                         final newCourse = await _showAddCourseDialog();
                         if (newCourse != null) {
@@ -182,40 +228,81 @@ class _ManageTeachersScreenState extends State<ManageTeachersScreen> {
                   final course = entry.value;
                   return ListTile(
                     dense: true,
-                    title: Text(course.name, style: GoogleFonts.cairo(fontSize: 14, color: theme.colorScheme.onSurface)),
-                    subtitle: Text('${course.department} - ${course.level}', style: GoogleFonts.cairo(fontSize: 12, color: theme.colorScheme.onSurfaceVariant)),
+                    title: Text(
+                      course.name,
+                      style: GoogleFonts.cairo(
+                        fontSize: 14,
+                        color: theme.colorScheme.onSurface,
+                      ),
+                    ),
+                    subtitle: Text(
+                      '${course.department} - ${course.level}',
+                      style: GoogleFonts.cairo(
+                        fontSize: 12,
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
                     trailing: IconButton(
-                      icon: Icon(LucideIcons.trash2, size: 18, color: theme.colorScheme.error),
-                      onPressed: () => setDialogState(() => selectedCourses.removeAt(idx)),
+                      icon: Icon(
+                        LucideIcons.trash2,
+                        size: 18,
+                        color: theme.colorScheme.error,
+                      ),
+                      onPressed: () =>
+                          setDialogState(() => selectedCourses.removeAt(idx)),
                     ),
                   );
                 }),
                 if (selectedCourses.isEmpty)
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 8.0),
-                    child: Text('لا توجد مواد مضافة', style: GoogleFonts.cairo(color: theme.colorScheme.onSurfaceVariant, fontSize: 12)),
+                    child: Text(
+                      'لا توجد مواد مضافة',
+                      style: GoogleFonts.cairo(
+                        color: theme.colorScheme.onSurfaceVariant,
+                        fontSize: 12,
+                      ),
+                    ),
                   ),
               ],
             ),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(context), child: Text('إلغاء', style: GoogleFonts.cairo(color: theme.colorScheme.onSurfaceVariant))),
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(
+                'إلغاء',
+                style: GoogleFonts.cairo(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
             ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: theme.colorScheme.primary),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: theme.colorScheme.primary,
+              ),
               onPressed: () async {
                 final messenger = ScaffoldMessenger.of(context);
-                if (usernameController.text.isEmpty || passwordController.text.isEmpty) {
+                if (usernameController.text.isEmpty ||
+                    passwordController.text.isEmpty) {
                   messenger.showSnackBar(
                     SnackBar(
-                      content: Text('يرجى ملء كافة الحقول الإجبارية', style: GoogleFonts.cairo(color: theme.colorScheme.onError)),
+                      content: Text(
+                        'يرجى ملء كافة الحقول الإجبارية',
+                        style: GoogleFonts.cairo(
+                          color: theme.colorScheme.onError,
+                        ),
+                      ),
                       backgroundColor: theme.colorScheme.error,
                     ),
                   );
                   return;
                 }
-                
+
                 final teacherData = Teacher(
-                  id: isEdit ? teacher.id : 'teacher-${DateTime.now().millisecondsSinceEpoch}',
+                  id: isEdit
+                      ? teacher.id
+                      : 'teacher-${DateTime.now().millisecondsSinceEpoch}',
                   username: usernameController.text.trim(),
                   password: passwordController.text.trim(),
                   courses: selectedCourses,
@@ -223,20 +310,30 @@ class _ManageTeachersScreenState extends State<ManageTeachersScreen> {
 
                 try {
                   if (isEdit) {
-                    await ApiService.updateTeacher(teacher!.id, teacherData.toJson());
+                    await ApiService.updateTeacher(
+                      teacher!.id,
+                      teacherData.toJson(),
+                    );
                   } else {
                     await ApiService.addTeacher(teacherData.toJson());
                   }
                   if (mounted) {
                     Navigator.pop(context);
                     _loadTeachers();
-                    _showSuccessSnackBar(isEdit ? 'تم تحديث بيانات المعلم' : 'تم إضافة المعلم بنجاح');
+                    _showSuccessSnackBar(
+                      isEdit
+                          ? 'تم تحديث بيانات المعلم'
+                          : 'تم إضافة المعلم بنجاح',
+                    );
                   }
                 } catch (e) {
                   _showErrorSnackBar('تعذر حفظ بيانات المعلم');
                 }
               },
-              child: Text('حفظ', style: GoogleFonts.cairo(color: theme.colorScheme.onPrimary)),
+              child: Text(
+                'حفظ',
+                style: GoogleFonts.cairo(color: theme.colorScheme.onPrimary),
+              ),
             ),
           ],
         ),
@@ -255,7 +352,13 @@ class _ManageTeachersScreenState extends State<ManageTeachersScreen> {
       builder: (context) => StatefulBuilder(
         builder: (context, setSheetState) => AlertDialog(
           backgroundColor: theme.colorScheme.surface,
-          title: Text('إضافة مادة', style: GoogleFonts.cairo(fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface)),
+          title: Text(
+            'إضافة مادة',
+            style: GoogleFonts.cairo(
+              fontWeight: FontWeight.bold,
+              color: theme.colorScheme.onSurface,
+            ),
+          ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -263,46 +366,96 @@ class _ManageTeachersScreenState extends State<ManageTeachersScreen> {
                 controller: nameController,
                 style: GoogleFonts.cairo(color: theme.colorScheme.onSurface),
                 decoration: InputDecoration(
-                  labelText: 'اسم المادة', 
-                  labelStyle: GoogleFonts.cairo(color: theme.colorScheme.onSurfaceVariant),
-                  border: const OutlineInputBorder()
+                  labelText: 'اسم المادة',
+                  labelStyle: GoogleFonts.cairo(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                  border: const OutlineInputBorder(),
                 ),
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
                 initialValue: selectedDept,
                 dropdownColor: theme.colorScheme.surface,
-                items: _departments.map((e) => DropdownMenuItem(value: e, child: Text(e, style: GoogleFonts.cairo(color: theme.colorScheme.onSurface)))).toList(),
+                items: _departments
+                    .map(
+                      (e) => DropdownMenuItem(
+                        value: e,
+                        child: Text(
+                          e,
+                          style: GoogleFonts.cairo(
+                            color: theme.colorScheme.onSurface,
+                          ),
+                        ),
+                      ),
+                    )
+                    .toList(),
                 onChanged: (v) => setSheetState(() => selectedDept = v!),
                 decoration: InputDecoration(
-                  labelText: 'القسم', 
-                  labelStyle: GoogleFonts.cairo(color: theme.colorScheme.onSurfaceVariant),
-                  border: const OutlineInputBorder()
+                  labelText: 'القسم',
+                  labelStyle: GoogleFonts.cairo(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                  border: const OutlineInputBorder(),
                 ),
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
                 initialValue: selectedLevel,
                 dropdownColor: theme.colorScheme.surface,
-                items: _levels.map((e) => DropdownMenuItem(value: e, child: Text(e, style: GoogleFonts.cairo(color: theme.colorScheme.onSurface)))).toList(),
+                items: _levels
+                    .map(
+                      (e) => DropdownMenuItem(
+                        value: e,
+                        child: Text(
+                          e,
+                          style: GoogleFonts.cairo(
+                            color: theme.colorScheme.onSurface,
+                          ),
+                        ),
+                      ),
+                    )
+                    .toList(),
                 onChanged: (v) => setSheetState(() => selectedLevel = v!),
                 decoration: InputDecoration(
-                  labelText: 'الفرقة', 
-                  labelStyle: GoogleFonts.cairo(color: theme.colorScheme.onSurfaceVariant),
-                  border: const OutlineInputBorder()
+                  labelText: 'الفرقة',
+                  labelStyle: GoogleFonts.cairo(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                  border: const OutlineInputBorder(),
                 ),
               ),
             ],
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(context), child: Text('إلغاء', style: GoogleFonts.cairo(color: theme.colorScheme.onSurfaceVariant))),
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(
+                'إلغاء',
+                style: GoogleFonts.cairo(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
             ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: theme.colorScheme.primary),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: theme.colorScheme.primary,
+              ),
               onPressed: () {
                 if (nameController.text.isEmpty) return;
-                Navigator.pop(context, Course(name: nameController.text, level: selectedLevel, department: selectedDept));
+                Navigator.pop(
+                  context,
+                  Course(
+                    name: nameController.text,
+                    level: selectedLevel,
+                    department: selectedDept,
+                  ),
+                );
               },
-              child: Text('إضافة', style: GoogleFonts.cairo(color: theme.colorScheme.onPrimary)),
+              child: Text(
+                'إضافة',
+                style: GoogleFonts.cairo(color: theme.colorScheme.onPrimary),
+              ),
             ),
           ],
         ),
@@ -318,7 +471,10 @@ class _ManageTeachersScreenState extends State<ManageTeachersScreen> {
       child: Scaffold(
         backgroundColor: theme.scaffoldBackgroundColor,
         appBar: AppBar(
-          title: Text('إدارة المعلمين', style: GoogleFonts.cairo(fontWeight: FontWeight.bold)),
+          title: Text(
+            'إدارة المعلمين',
+            style: GoogleFonts.cairo(fontWeight: FontWeight.bold),
+          ),
           backgroundColor: theme.colorScheme.surface,
           elevation: 0,
         ),
@@ -334,12 +490,21 @@ class _ManageTeachersScreenState extends State<ManageTeachersScreen> {
               child: TextField(
                 controller: _searchController,
                 onChanged: (_) => _filterTeachers(),
-                style: GoogleFonts.cairo(color: theme.textTheme.bodyLarge?.color),
+                style: GoogleFonts.cairo(
+                  color: theme.textTheme.bodyLarge?.color,
+                ),
                 decoration: InputDecoration(
                   hintText: 'بحث باسم المستخدم...',
-                  hintStyle: GoogleFonts.cairo(color: theme.textTheme.bodySmall?.color),
-                  prefixIcon: Icon(LucideIcons.search, color: theme.textTheme.bodySmall?.color),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  hintStyle: GoogleFonts.cairo(
+                    color: theme.textTheme.bodySmall?.color,
+                  ),
+                  prefixIcon: Icon(
+                    LucideIcons.search,
+                    color: theme.textTheme.bodySmall?.color,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide(color: theme.dividerColor),
@@ -353,15 +518,15 @@ class _ManageTeachersScreenState extends State<ManageTeachersScreen> {
               child: _isLoading
                   ? const Center(child: CircularProgressIndicator())
                   : _filteredTeachers.isEmpty
-                      ? _buildEmptyState()
-                      : ListView.builder(
-                          padding: const EdgeInsets.all(16),
-                          itemCount: _filteredTeachers.length,
-                          itemBuilder: (context, index) {
-                            final teacher = _filteredTeachers[index];
-                            return _buildTeacherCard(teacher);
-                          },
-                        ),
+                  ? _buildEmptyState()
+                  : ListView.builder(
+                      padding: const EdgeInsets.all(16),
+                      itemCount: _filteredTeachers.length,
+                      itemBuilder: (context, index) {
+                        final teacher = _filteredTeachers[index];
+                        return _buildTeacherCard(teacher);
+                      },
+                    ),
             ),
           ],
         ),
@@ -414,7 +579,11 @@ class _ManageTeachersScreenState extends State<ManageTeachersScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(LucideIcons.users, size: 64, color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.3)),
+          Icon(
+            LucideIcons.users,
+            size: 64,
+            color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.3),
+          ),
           const SizedBox(height: 16),
           Text(
             'لا يوجد معلمون مضافون بعد',

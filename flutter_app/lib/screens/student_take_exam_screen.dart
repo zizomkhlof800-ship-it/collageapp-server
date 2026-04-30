@@ -10,13 +10,18 @@ import 'student_dashboard_screen.dart';
 class StudentTakeExamScreen extends StatefulWidget {
   final ExamItem exam;
   final String studentCode;
-  const StudentTakeExamScreen({super.key, required this.exam, required this.studentCode});
+  const StudentTakeExamScreen({
+    super.key,
+    required this.exam,
+    required this.studentCode,
+  });
 
   @override
   State<StudentTakeExamScreen> createState() => _StudentTakeExamScreenState();
 }
 
-class _StudentTakeExamScreenState extends State<StudentTakeExamScreen> with WidgetsBindingObserver {
+class _StudentTakeExamScreenState extends State<StudentTakeExamScreen>
+    with WidgetsBindingObserver {
   List<Map<String, dynamic>> _questions = [];
   final Map<int, dynamic> _answers = {};
   Timer? _timer;
@@ -43,7 +48,8 @@ class _StudentTakeExamScreenState extends State<StudentTakeExamScreen> with Widg
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (_isSubmitted) return;
-    if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive) {
       _handleCheatDetection();
     }
   }
@@ -64,12 +70,24 @@ class _StudentTakeExamScreenState extends State<StudentTakeExamScreen> with Widg
       builder: (context) => Directionality(
         textDirection: TextDirection.rtl,
         child: AlertDialog(
-          title: Text('تحذير غش!', style: GoogleFonts.cairo(color: Colors.red, fontWeight: FontWeight.bold)),
-          content: Text('لقد غادرت شاشة الامتحان. هذا هو الإنذار الأول. في المرة القادمة سيتم سحب الورقة وتصفير الدرجة تلقائياً.', style: GoogleFonts.cairo()),
+          title: Text(
+            'تحذير غش!',
+            style: GoogleFonts.cairo(
+              color: Colors.red,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          content: Text(
+            'لقد غادرت شاشة الامتحان. هذا هو الإنذار الأول. في المرة القادمة سيتم سحب الورقة وتصفير الدرجة تلقائياً.',
+            style: GoogleFonts.cairo(),
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text('فهمت، سأكمل الامتحان', style: GoogleFonts.cairo(fontWeight: FontWeight.bold)),
+              child: Text(
+                'فهمت، سأكمل الامتحان',
+                style: GoogleFonts.cairo(fontWeight: FontWeight.bold),
+              ),
             ),
           ],
         ),
@@ -81,7 +99,7 @@ class _StudentTakeExamScreenState extends State<StudentTakeExamScreen> with Widg
     if (_isSubmitted) return;
     _isSubmitted = true;
     _timer?.cancel();
-    
+
     // Score 0 due to cheating
     try {
       await ApiService.addExamResult({
@@ -104,8 +122,17 @@ class _StudentTakeExamScreenState extends State<StudentTakeExamScreen> with Widg
       builder: (context) => Directionality(
         textDirection: TextDirection.rtl,
         child: AlertDialog(
-          title: Text('تم سحب الورقة!', style: GoogleFonts.cairo(color: Colors.red, fontWeight: FontWeight.bold)),
-          content: Text('لقد تكررت محاولة مغادرة التطبيق، تم إلغاء امتحانك وتسجيل درجة (صفر).', style: GoogleFonts.cairo()),
+          title: Text(
+            'تم سحب الورقة!',
+            style: GoogleFonts.cairo(
+              color: Colors.red,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          content: Text(
+            'لقد تكررت محاولة مغادرة التطبيق، تم إلغاء امتحانك وتسجيل درجة (صفر).',
+            style: GoogleFonts.cairo(),
+          ),
           actions: [
             TextButton(
               onPressed: () {
@@ -121,7 +148,10 @@ class _StudentTakeExamScreenState extends State<StudentTakeExamScreen> with Widg
                   (route) => false,
                 );
               },
-              child: Text('العودة للرئيسية', style: GoogleFonts.cairo(fontWeight: FontWeight.bold)),
+              child: Text(
+                'العودة للرئيسية',
+                style: GoogleFonts.cairo(fontWeight: FontWeight.bold),
+              ),
             ),
           ],
         ),
@@ -151,24 +181,42 @@ class _StudentTakeExamScreenState extends State<StudentTakeExamScreen> with Widg
   Future<void> _fetchQuestions() async {
     try {
       final exam = await ApiService.getExamById(widget.exam.id);
-      List<Map<String, dynamic>> qs = List<Map<String, dynamic>>.from((exam['questions'] ?? []).map((e) => Map<String, dynamic>.from(e)));
+      List<Map<String, dynamic>> qs = List<Map<String, dynamic>>.from(
+        (exam['questions'] ?? []).map((e) => Map<String, dynamic>.from(e)),
+      );
       if (qs.isEmpty) {
         qs = [
-          ...List.generate(widget.exam.tfCount, (i) => {'type': 'tf', 'question': 'سؤال صح/خطأ ${i + 1}', 'correct': 'true'}),
-          ...List.generate(widget.exam.mcqCount, (i) => {'type': 'mcq', 'question': 'سؤال اختيار من متعدد ${i + 1}', 'options': ['اختيار 1', 'اختيار 2', 'اختيار 3', 'اختيار 4'], 'correctIndex': 0}),
+          ...List.generate(
+            widget.exam.tfCount,
+            (i) => {
+              'type': 'tf',
+              'question': 'سؤال صح/خطأ ${i + 1}',
+              'correct': 'true',
+            },
+          ),
+          ...List.generate(
+            widget.exam.mcqCount,
+            (i) => {
+              'type': 'mcq',
+              'question': 'سؤال اختيار من متعدد ${i + 1}',
+              'options': ['اختيار 1', 'اختيار 2', 'اختيار 3', 'اختيار 4'],
+              'correctIndex': 0,
+            },
+          ),
         ];
       }
-      
+
       // Shuffle questions
       qs.shuffle();
-      
+
       // For each MCQ, shuffle options while maintaining correct answer
       for (var q in qs) {
         if (q['type'] == 'mcq') {
           final options = List<String>.from(q['options'] ?? []);
-          final correctIdx = int.tryParse((q['correctIndex'] ?? 0).toString()) ?? 0;
+          final correctIdx =
+              int.tryParse((q['correctIndex'] ?? 0).toString()) ?? 0;
           final correctText = options[correctIdx];
-          
+
           options.shuffle();
           q['options'] = options;
           q['correctIndex'] = options.indexOf(correctText);
@@ -185,12 +233,17 @@ class _StudentTakeExamScreenState extends State<StudentTakeExamScreen> with Widg
 
   void _submitExam({bool isAutoSubmit = false}) async {
     if (_isSubmitted) return;
-    
+
     if (!isAutoSubmit) {
       final allAnswered = _answers.length == _questions.length;
       if (!allAnswered) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('أكمل جميع الأسئلة قبل الإنهاء', style: GoogleFonts.cairo())),
+          SnackBar(
+            content: Text(
+              'أكمل جميع الأسئلة قبل الإنهاء',
+              style: GoogleFonts.cairo(),
+            ),
+          ),
         );
         return;
       }
@@ -224,7 +277,9 @@ class _StudentTakeExamScreenState extends State<StudentTakeExamScreen> with Widg
           wrong++;
           continue;
         }
-        final corrIdx = int.tryParse((q['correctIndex'] ?? q['answer'] ?? -1).toString()) ?? -1;
+        final corrIdx =
+            int.tryParse((q['correctIndex'] ?? q['answer'] ?? -1).toString()) ??
+            -1;
         if (ans == corrIdx) {
           correct++;
         } else {
@@ -232,9 +287,9 @@ class _StudentTakeExamScreenState extends State<StudentTakeExamScreen> with Widg
         }
       }
     }
-    
+
     final score = total > 0 ? (correct * 100.0 / total) : 0.0;
-    
+
     try {
       await ApiService.addExamResult({
         'studentCode': widget.studentCode,
@@ -250,7 +305,7 @@ class _StudentTakeExamScreenState extends State<StudentTakeExamScreen> with Widg
     } catch (_) {}
 
     if (!mounted) return;
-    
+
     // Clear stack and go to dashboard
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(
@@ -262,7 +317,7 @@ class _StudentTakeExamScreenState extends State<StudentTakeExamScreen> with Widg
       ),
       (route) => false,
     );
-    
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('تم تسليم الامتحان بنجاح', style: GoogleFonts.cairo()),
@@ -276,26 +331,41 @@ class _StudentTakeExamScreenState extends State<StudentTakeExamScreen> with Widg
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: context.appBackground,
         appBar: AppBar(
-          backgroundColor: Colors.white,
+          backgroundColor: context.appSurface,
           elevation: 0,
           leading: IconButton(
-            icon: const Icon(LucideIcons.arrowRight, color: AppColors.text),
+            icon: Icon(LucideIcons.arrowRight, color: context.appText),
             onPressed: () {
               showDialog(
                 context: context,
                 builder: (context) => Directionality(
                   textDirection: TextDirection.rtl,
                   child: AlertDialog(
-                    title: Text('تنبيه', style: GoogleFonts.cairo(fontWeight: FontWeight.bold)),
-                    content: Text('هل أنت متأكد من الخروج؟ سيتم تسليم إجاباتك الحالية.', style: GoogleFonts.cairo()),
+                    title: Text(
+                      'تنبيه',
+                      style: GoogleFonts.cairo(fontWeight: FontWeight.bold),
+                    ),
+                    content: Text(
+                      'هل أنت متأكد من الخروج؟ سيتم تسليم إجاباتك الحالية.',
+                      style: GoogleFonts.cairo(),
+                    ),
                     actions: [
-                      TextButton(onPressed: () => Navigator.pop(context), child: Text('إلغاء', style: GoogleFonts.cairo())),
-                      TextButton(onPressed: () {
-                        Navigator.pop(context);
-                        _submitExam();
-                      }, child: Text('خروج وتسليم', style: GoogleFonts.cairo(color: Colors.red))),
+                      TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: Text('إلغاء', style: GoogleFonts.cairo()),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          _submitExam();
+                        },
+                        child: Text(
+                          'خروج وتسليم',
+                          style: GoogleFonts.cairo(color: Colors.red),
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -305,13 +375,23 @@ class _StudentTakeExamScreenState extends State<StudentTakeExamScreen> with Widg
           title: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(widget.exam.subject, style: GoogleFonts.cairo(color: AppColors.text, fontWeight: FontWeight.bold, fontSize: 16)),
-              Text('المؤقت: ${_formatTime(_secondsRemaining)}', 
+              Text(
+                widget.exam.subject,
                 style: GoogleFonts.cairo(
-                  color: _secondsRemaining < 60 ? Colors.red : AppColors.primary, 
-                  fontWeight: FontWeight.bold, 
-                  fontSize: 12
-                )
+                  color: context.appText,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
+              Text(
+                'المؤقت: ${_formatTime(_secondsRemaining)}',
+                style: GoogleFonts.cairo(
+                  color: _secondsRemaining < 60
+                      ? Colors.red
+                      : AppColors.primary,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                ),
               ),
             ],
           ),
@@ -326,7 +406,10 @@ class _StudentTakeExamScreenState extends State<StudentTakeExamScreen> with Widg
               child: Center(
                 child: Text(
                   '${_answers.length} / ${_questions.length}',
-                  style: GoogleFonts.cairo(color: AppColors.primary, fontWeight: FontWeight.bold),
+                  style: GoogleFonts.cairo(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ),
@@ -335,7 +418,9 @@ class _StudentTakeExamScreenState extends State<StudentTakeExamScreen> with Widg
         body: Column(
           children: [
             LinearProgressIndicator(
-              value: _questions.isEmpty ? 0 : _answers.length / _questions.length,
+              value: _questions.isEmpty
+                  ? 0
+                  : _answers.length / _questions.length,
               backgroundColor: AppColors.primary.withOpacity(0.1),
               valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
             ),
@@ -347,11 +432,15 @@ class _StudentTakeExamScreenState extends State<StudentTakeExamScreen> with Widg
                   final q = _questions[i];
                   final type = (q['type'] ?? '').toString();
                   final title = (q['question'] ?? 'سؤال').toString();
-                  final options = List<String>.from((q['options'] ?? []).map((e) => e.toString()));
+                  final options = List<String>.from(
+                    (q['options'] ?? []).map((e) => e.toString()),
+                  );
                   return Card(
                     margin: const EdgeInsets.only(bottom: 16),
                     elevation: 2,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(15),
+                    ),
                     child: Padding(
                       padding: const EdgeInsets.all(16),
                       child: Column(
@@ -363,17 +452,31 @@ class _StudentTakeExamScreenState extends State<StudentTakeExamScreen> with Widg
                               CircleAvatar(
                                 radius: 12,
                                 backgroundColor: AppColors.primary,
-                                child: Text('${i + 1}', style: const TextStyle(color: Colors.white, fontSize: 12)),
+                                child: Text(
+                                  '${i + 1}',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                  ),
+                                ),
                               ),
                               const SizedBox(width: 12),
                               Expanded(
-                                child: Text(title, style: GoogleFonts.cairo(fontWeight: FontWeight.bold, fontSize: 15)),
+                                child: Text(
+                                  title,
+                                  style: GoogleFonts.cairo(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 15,
+                                  ),
+                                ),
                               ),
                             ],
                           ),
                           const SizedBox(height: 16),
-                          if (type == 'tf') _buildTFOptions(i)
-                          else _buildMCQOptions(i, options),
+                          if (type == 'tf')
+                            _buildTFOptions(i)
+                          else
+                            _buildMCQOptions(i, options),
                         ],
                       ),
                     ),
@@ -390,10 +493,19 @@ class _StudentTakeExamScreenState extends State<StudentTakeExamScreen> with Widg
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
                     padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                     elevation: 4,
                   ),
-                  child: Text('إنهاء وتسليم الاختبار', style: GoogleFonts.cairo(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                  child: Text(
+                    'إنهاء وتسليم الاختبار',
+                    style: GoogleFonts.cairo(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -439,7 +551,12 @@ class _StudentTakeExamScreenState extends State<StudentTakeExamScreen> with Widg
     );
   }
 
-  Widget _buildOptionTile({required String title, required dynamic value, required dynamic groupValue, required ValueChanged<dynamic> onChanged}) {
+  Widget _buildOptionTile({
+    required String title,
+    required dynamic value,
+    required dynamic groupValue,
+    required ValueChanged<dynamic> onChanged,
+  }) {
     final isSelected = value == groupValue;
     return InkWell(
       onTap: () => onChanged(value),
@@ -447,9 +564,13 @@ class _StudentTakeExamScreenState extends State<StudentTakeExamScreen> with Widg
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary.withOpacity(0.05) : Colors.transparent,
+          color: isSelected
+              ? AppColors.primary.withOpacity(0.05)
+              : Colors.transparent,
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: isSelected ? AppColors.primary : AppColors.inputBorder),
+          border: Border.all(
+            color: isSelected ? AppColors.primary : AppColors.inputBorder,
+          ),
         ),
         child: Row(
           children: [
@@ -458,14 +579,34 @@ class _StudentTakeExamScreenState extends State<StudentTakeExamScreen> with Widg
               height: 20,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                border: Border.all(color: isSelected ? AppColors.primary : AppColors.textLight, width: 2),
+                border: Border.all(
+                  color: isSelected ? AppColors.primary : context.appTextLight,
+                  width: 2,
+                ),
               ),
-              child: isSelected 
-                ? Center(child: Container(width: 10, height: 10, decoration: const BoxDecoration(shape: BoxShape.circle, color: AppColors.primary)))
-                : null,
+              child: isSelected
+                  ? Center(
+                      child: Container(
+                        width: 10,
+                        height: 10,
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                    )
+                  : null,
             ),
             const SizedBox(width: 12),
-            Expanded(child: Text(title, style: GoogleFonts.cairo(color: isSelected ? AppColors.primary : AppColors.text, fontWeight: isSelected ? FontWeight.bold : FontWeight.normal))),
+            Expanded(
+              child: Text(
+                title,
+                style: GoogleFonts.cairo(
+                  color: isSelected ? AppColors.primary : context.appText,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                ),
+              ),
+            ),
           ],
         ),
       ),

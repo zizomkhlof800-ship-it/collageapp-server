@@ -11,13 +11,20 @@ class StudentElectronicExamsScreen extends StatefulWidget {
   final String department;
   final String level;
   final String studentCode;
-  const StudentElectronicExamsScreen({super.key, required this.department, required this.level, required this.studentCode});
+  const StudentElectronicExamsScreen({
+    super.key,
+    required this.department,
+    required this.level,
+    required this.studentCode,
+  });
 
   @override
-  State<StudentElectronicExamsScreen> createState() => _StudentElectronicExamsScreenState();
+  State<StudentElectronicExamsScreen> createState() =>
+      _StudentElectronicExamsScreenState();
 }
 
-class _StudentElectronicExamsScreenState extends State<StudentElectronicExamsScreen> {
+class _StudentElectronicExamsScreenState
+    extends State<StudentElectronicExamsScreen> {
   final DataService _dataService = DataService();
   String? _lastCompletedExamId;
   Map<String, dynamic>? _latestResult;
@@ -42,20 +49,20 @@ class _StudentElectronicExamsScreenState extends State<StudentElectronicExamsScr
       setState(() {});
     }
   }
-  
+
   Future<void> _loadLastCompleted() async {
     final prefs = await SharedPreferences.getInstance();
     _lastCompletedExamId = prefs.getString('last_exam_completed_id');
     if (mounted) setState(() {});
   }
-  
+
   Future<void> _setLastCompleted(String id) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('last_exam_completed_id', id);
     _lastCompletedExamId = id;
     if (mounted) setState(() {});
   }
-  
+
   Future<void> _fetchLatestResult() async {
     try {
       final res = await ApiService.getLatestExamResult(widget.studentCode);
@@ -66,12 +73,28 @@ class _StudentElectronicExamsScreenState extends State<StudentElectronicExamsScr
 
   @override
   Widget build(BuildContext context) {
-    final exams = _dataService.exams.where((e) => e.department == widget.department && e.level == widget.level).toList();
-    final lastExam = _lastCompletedExamId == null ? null : exams.firstWhere(
-      (e) => e.id == _lastCompletedExamId,
-      orElse: () => exams.isNotEmpty ? exams.first : ExamItem(id: '', subject: '', department: '', level: '', tfCount: 0, mcqCount: 0, createdAt: ''),
-    );
-    
+    final exams = _dataService.exams
+        .where(
+          (e) => e.department == widget.department && e.level == widget.level,
+        )
+        .toList();
+    final lastExam = _lastCompletedExamId == null
+        ? null
+        : exams.firstWhere(
+            (e) => e.id == _lastCompletedExamId,
+            orElse: () => exams.isNotEmpty
+                ? exams.first
+                : ExamItem(
+                    id: '',
+                    subject: '',
+                    department: '',
+                    level: '',
+                    tfCount: 0,
+                    mcqCount: 0,
+                    createdAt: '',
+                  ),
+          );
+
     // Check if result should be shown (after endTime)
     bool showResultDetails = false;
     if (lastExam != null && lastExam.endTime != null) {
@@ -89,19 +112,19 @@ class _StudentElectronicExamsScreenState extends State<StudentElectronicExamsScr
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: const Color(0xFFF8F9FA),
+        backgroundColor: context.appBackground,
         appBar: AppBar(
-          backgroundColor: Colors.white,
+          backgroundColor: context.appSurface,
           elevation: 0,
           centerTitle: false,
           leading: IconButton(
-            icon: const Icon(LucideIcons.arrowRight, color: AppColors.text),
+            icon: Icon(LucideIcons.arrowRight, color: context.appText),
             onPressed: () => Navigator.pop(context),
           ),
           title: Text(
             'الاختبارات الالكترونية',
             style: GoogleFonts.cairo(
-              color: AppColors.text,
+              color: context.appText,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -111,11 +134,18 @@ class _StudentElectronicExamsScreenState extends State<StudentElectronicExamsScr
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              if (showStats) _buildStatsCard(lastExam, showResultDetails) else _buildStatsCard(null, false),
+              if (showStats)
+                _buildStatsCard(lastExam, showResultDetails)
+              else
+                _buildStatsCard(null, false),
               const SizedBox(height: 16),
               Text(
                 'اختبارات مضافة من قبل أعضاء التدريس',
-                style: GoogleFonts.cairo(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.text),
+                style: GoogleFonts.cairo(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: context.appText,
+                ),
               ),
               const SizedBox(height: 12),
               if (exams.isEmpty)
@@ -134,16 +164,27 @@ class _StudentElectronicExamsScreenState extends State<StudentElectronicExamsScr
       return Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: context.appSurface,
           borderRadius: BorderRadius.circular(16),
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 6, offset: const Offset(0, 3))],
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(
+                alpha: context.isDarkMode ? 0.18 : 0.05,
+              ),
+              blurRadius: 6,
+              offset: const Offset(0, 3),
+            ),
+          ],
         ),
         child: Row(
           children: [
             const Icon(LucideIcons.barChart3, color: AppColors.primary),
             const SizedBox(width: 12),
             Expanded(
-              child: Text('لا توجد إحصائيات متاحة بعد', style: GoogleFonts.cairo(color: AppColors.textLight)),
+              child: Text(
+                'لا توجد إحصائيات متاحة بعد',
+                style: GoogleFonts.cairo(color: context.appTextLight),
+              ),
             ),
           ],
         ),
@@ -154,9 +195,17 @@ class _StudentElectronicExamsScreenState extends State<StudentElectronicExamsScr
       return Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: context.appSurface,
           borderRadius: BorderRadius.circular(16),
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 6, offset: const Offset(0, 3))],
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(
+                alpha: context.isDarkMode ? 0.18 : 0.05,
+              ),
+              blurRadius: 6,
+              offset: const Offset(0, 3),
+            ),
+          ],
         ),
         child: Column(
           children: [
@@ -167,7 +216,10 @@ class _StudentElectronicExamsScreenState extends State<StudentElectronicExamsScr
                 Expanded(
                   child: Text(
                     'تم تسليم اختبار (${exam.subject}) بنجاح.',
-                    style: GoogleFonts.cairo(fontWeight: FontWeight.bold, color: AppColors.text),
+                    style: GoogleFonts.cairo(
+                      fontWeight: FontWeight.bold,
+                      color: context.appText,
+                    ),
                   ),
                 ),
               ],
@@ -175,7 +227,10 @@ class _StudentElectronicExamsScreenState extends State<StudentElectronicExamsScr
             const SizedBox(height: 8),
             Text(
               'سيتم عرض النتيجة والمراجعة فور انتهاء وقت الامتحان الكلي.',
-              style: GoogleFonts.cairo(fontSize: 12, color: AppColors.textLight),
+              style: GoogleFonts.cairo(
+                fontSize: 12,
+                color: context.appTextLight,
+              ),
             ),
           ],
         ),
@@ -185,9 +240,17 @@ class _StudentElectronicExamsScreenState extends State<StudentElectronicExamsScr
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.appSurface,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 6, offset: const Offset(0, 3))],
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(
+              alpha: context.isDarkMode ? 0.18 : 0.05,
+            ),
+            blurRadius: 6,
+            offset: const Offset(0, 3),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -196,7 +259,13 @@ class _StudentElectronicExamsScreenState extends State<StudentElectronicExamsScr
             children: [
               const Icon(LucideIcons.barChart3, color: AppColors.primary),
               const SizedBox(width: 8),
-              Text('إحصائيات الاختبار الأخير', style: GoogleFonts.cairo(fontWeight: FontWeight.bold, color: AppColors.text)),
+              Text(
+                'إحصائيات الاختبار الأخير',
+                style: GoogleFonts.cairo(
+                  fontWeight: FontWeight.bold,
+                  color: context.appText,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 12),
@@ -204,8 +273,18 @@ class _StudentElectronicExamsScreenState extends State<StudentElectronicExamsScr
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               _buildStatItem('اسم المادة', exam.subject, LucideIcons.bookOpen),
-              _buildStatItem('عدد الأسئلة', (exam.tfCount + exam.mcqCount).toString(), LucideIcons.listChecks),
-              _buildStatItem('النتيجة', _latestResult == null ? '-' : '${(_latestResult?['score'] ?? 0).toString()}%', LucideIcons.badgeCheck),
+              _buildStatItem(
+                'عدد الأسئلة',
+                (exam.tfCount + exam.mcqCount).toString(),
+                LucideIcons.listChecks,
+              ),
+              _buildStatItem(
+                'النتيجة',
+                _latestResult == null
+                    ? '-'
+                    : '${(_latestResult?['score'] ?? 0).toString()}%',
+                LucideIcons.badgeCheck,
+              ),
             ],
           ),
           const SizedBox(height: 8),
@@ -213,9 +292,21 @@ class _StudentElectronicExamsScreenState extends State<StudentElectronicExamsScr
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                _buildStatItem('صحيح', (_latestResult?['correct'] ?? 0).toString(), LucideIcons.check),
-                _buildStatItem('خطأ', (_latestResult?['wrong'] ?? 0).toString(), LucideIcons.x),
-                _buildStatItem('تم الإنهاء', (_latestResult?['submittedAt'] ?? '').toString(), LucideIcons.calendarClock),
+                _buildStatItem(
+                  'صحيح',
+                  (_latestResult?['correct'] ?? 0).toString(),
+                  LucideIcons.check,
+                ),
+                _buildStatItem(
+                  'خطأ',
+                  (_latestResult?['wrong'] ?? 0).toString(),
+                  LucideIcons.x,
+                ),
+                _buildStatItem(
+                  'تم الإنهاء',
+                  (_latestResult?['submittedAt'] ?? '').toString(),
+                  LucideIcons.calendarClock,
+                ),
               ],
             ),
         ],
@@ -228,7 +319,7 @@ class _StudentElectronicExamsScreenState extends State<StudentElectronicExamsScr
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: AppColors.background,
+          color: context.appBackground,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Column(
@@ -238,11 +329,24 @@ class _StudentElectronicExamsScreenState extends State<StudentElectronicExamsScr
               children: [
                 Icon(icon, color: AppColors.primary, size: 18),
                 const SizedBox(width: 6),
-                Text(title, style: GoogleFonts.cairo(fontSize: 12, color: AppColors.textLight)),
+                Text(
+                  title,
+                  style: GoogleFonts.cairo(
+                    fontSize: 12,
+                    color: context.appTextLight,
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 6),
-            Text(value, style: GoogleFonts.cairo(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.text)),
+            Text(
+              value,
+              style: GoogleFonts.cairo(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: context.appText,
+              ),
+            ),
           ],
         ),
       ),
@@ -257,7 +361,12 @@ class _StudentElectronicExamsScreenState extends State<StudentElectronicExamsScr
           final start = DateTime.tryParse(exam.startTime!);
           if (start != null && now.isBefore(start)) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('عذراً، هذا الاختبار لم يبدأ بعد.', style: GoogleFonts.cairo())),
+              SnackBar(
+                content: Text(
+                  'عذراً، هذا الاختبار لم يبدأ بعد.',
+                  style: GoogleFonts.cairo(),
+                ),
+              ),
             );
             return;
           }
@@ -266,76 +375,140 @@ class _StudentElectronicExamsScreenState extends State<StudentElectronicExamsScr
           final end = DateTime.tryParse(exam.endTime!);
           if (end != null && now.isAfter(end)) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('عذراً، انتهى وقت هذا الاختبار.', style: GoogleFonts.cairo())),
+              SnackBar(
+                content: Text(
+                  'عذراً، انتهى وقت هذا الاختبار.',
+                  style: GoogleFonts.cairo(),
+                ),
+              ),
             );
             return;
           }
         }
 
-        final result = await Navigator.push(context, MaterialPageRoute(builder: (context) => StudentTakeExamScreen(exam: exam, studentCode: widget.studentCode)));
-        if (result is Map && result['completed'] == true && result['examId'] == exam.id) {
+        final result = await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => StudentTakeExamScreen(
+              exam: exam,
+              studentCode: widget.studentCode,
+            ),
+          ),
+        );
+        if (result is Map &&
+            result['completed'] == true &&
+            result['examId'] == exam.id) {
           await _setLastCompleted(exam.id);
           await _fetchLatestResult();
         }
       },
       child: Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 6, offset: const Offset(0, 3))],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            children: [
-              const Icon(LucideIcons.fileQuestion, color: AppColors.primary),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(exam.subject, style: GoogleFonts.cairo(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.text)),
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: context.appSurface,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(
+                alpha: context.isDarkMode ? 0.18 : 0.05,
               ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Icon(LucideIcons.graduationCap, size: 14, color: AppColors.textLight),
-              const SizedBox(width: 6),
-              Text('${exam.level} - ${exam.department}', style: GoogleFonts.cairo(fontSize: 12, color: AppColors.textLight)),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Row(
-            children: [
-              Icon(LucideIcons.checkCheck, size: 14, color: AppColors.textLight),
-              const SizedBox(width: 6),
-              Text('صح/خطأ: ${exam.tfCount}', style: GoogleFonts.cairo(fontSize: 12, color: AppColors.textLight)),
-              const SizedBox(width: 12),
-              Icon(LucideIcons.listChecks, size: 14, color: AppColors.textLight),
-              const SizedBox(width: 6),
-              Text('اختيار متعدد: ${exam.mcqCount}', style: GoogleFonts.cairo(fontSize: 12, color: AppColors.textLight)),
-            ],
-          ),
-        ],
+              blurRadius: 6,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                const Icon(LucideIcons.fileQuestion, color: AppColors.primary),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    exam.subject,
+                    style: GoogleFonts.cairo(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: context.appText,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Icon(
+                  LucideIcons.graduationCap,
+                  size: 14,
+                  color: context.appTextLight,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  '${exam.level} - ${exam.department}',
+                  style: GoogleFonts.cairo(
+                    fontSize: 12,
+                    color: context.appTextLight,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                Icon(
+                  LucideIcons.checkCheck,
+                  size: 14,
+                  color: context.appTextLight,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  'صح/خطأ: ${exam.tfCount}',
+                  style: GoogleFonts.cairo(
+                    fontSize: 12,
+                    color: context.appTextLight,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Icon(
+                  LucideIcons.listChecks,
+                  size: 14,
+                  color: context.appTextLight,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  'اختيار متعدد: ${exam.mcqCount}',
+                  style: GoogleFonts.cairo(
+                    fontSize: 12,
+                    color: context.appTextLight,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
-    ));
+    );
   }
 
   Widget _buildEmptyPlaceholder() {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.appSurface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey[300]!),
+        border: Border.all(color: context.appBorder),
       ),
       child: Column(
         children: [
-          Icon(LucideIcons.fileQuestion, size: 48, color: Colors.grey[300]),
+          Icon(LucideIcons.fileQuestion, size: 48, color: context.appTextLight),
           const SizedBox(height: 8),
-          Text('لا توجد اختبارات مضافة بعد', style: GoogleFonts.cairo(color: Colors.grey[500])),
+          Text(
+            'لا توجد اختبارات مضافة بعد',
+            style: GoogleFonts.cairo(color: context.appTextLight),
+          ),
         ],
       ),
     );

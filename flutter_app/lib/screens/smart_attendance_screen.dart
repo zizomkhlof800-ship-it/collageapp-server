@@ -6,7 +6,6 @@ import 'package:qr_flutter/qr_flutter.dart';
 import '../constants/theme.dart';
 import '../services/attendance_service.dart';
 import '../services/api_service.dart';
- 
 
 import 'dart:convert';
 
@@ -58,7 +57,8 @@ class _SmartAttendanceScreenState extends State<SmartAttendanceScreen> {
       final data = await ApiService.getActiveSession(tid);
       if (data != null) {
         final code = (data['code'] ?? '').toString();
-        final expiresAt = int.tryParse((data['expiresAt'] ?? 0).toString()) ?? 0;
+        final expiresAt =
+            int.tryParse((data['expiresAt'] ?? 0).toString()) ?? 0;
         final lectureId = (data['lectureId'] ?? '').toString();
         final levelId = (data['levelId'] ?? '').toString();
         final subjectId = (data['subjectId'] ?? '').toString();
@@ -82,7 +82,10 @@ class _SmartAttendanceScreenState extends State<SmartAttendanceScreen> {
     if (AttendanceService.instance.isSessionActive) {
       messenger.showSnackBar(
         SnackBar(
-          content: Text('الجلسة الحالية لا تزال سارية', style: GoogleFonts.cairo()),
+          content: Text(
+            'الجلسة الحالية لا تزال سارية',
+            style: GoogleFonts.cairo(),
+          ),
           backgroundColor: Colors.orange,
         ),
       );
@@ -92,7 +95,10 @@ class _SmartAttendanceScreenState extends State<SmartAttendanceScreen> {
     if (widget.levelId == null || widget.subjectId == null) {
       messenger.showSnackBar(
         SnackBar(
-          content: Text('يرجى اختيار مادة وفرقة أولاً من لوحة التحكم', style: GoogleFonts.cairo()),
+          content: Text(
+            'يرجى اختيار مادة وفرقة أولاً من لوحة التحكم',
+            style: GoogleFonts.cairo(),
+          ),
           backgroundColor: Colors.red,
         ),
       );
@@ -124,7 +130,10 @@ class _SmartAttendanceScreenState extends State<SmartAttendanceScreen> {
     } catch (_) {
       messenger.showSnackBar(
         SnackBar(
-          content: Text('تعذر إنشاء جلسة. تحقق من اتصال السيرفر', style: GoogleFonts.cairo()),
+          content: Text(
+            'تعذر إنشاء جلسة. تحقق من اتصال السيرفر',
+            style: GoogleFonts.cairo(),
+          ),
           backgroundColor: Colors.red,
         ),
       );
@@ -134,15 +143,30 @@ class _SmartAttendanceScreenState extends State<SmartAttendanceScreen> {
 
   void _endPreparation() async {
     if (!AttendanceService.instance.isSessionActive) return;
-    
+
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('إنهاء التحضير', style: GoogleFonts.cairo(fontWeight: FontWeight.bold)),
-        content: Text('هل أنت متأكد من إنهاء عملية التحضير الآن؟ سيتم تسجيل باقي الطلاب كغائبين.', style: GoogleFonts.cairo()),
+        title: Text(
+          'إنهاء التحضير',
+          style: GoogleFonts.cairo(fontWeight: FontWeight.bold),
+        ),
+        content: Text(
+          'هل أنت متأكد من إنهاء عملية التحضير الآن؟ سيتم تسجيل باقي الطلاب كغائبين.',
+          style: GoogleFonts.cairo(),
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: Text('إلغاء', style: GoogleFonts.cairo())),
-          TextButton(onPressed: () => Navigator.pop(context, true), child: Text('تأكيد الإنهاء', style: GoogleFonts.cairo(color: Colors.red))),
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text('إلغاء', style: GoogleFonts.cairo()),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(
+              'تأكيد الإنهاء',
+              style: GoogleFonts.cairo(color: Colors.red),
+            ),
+          ),
         ],
       ),
     );
@@ -155,7 +179,9 @@ class _SmartAttendanceScreenState extends State<SmartAttendanceScreen> {
       final lectureId = AttendanceService.instance.currentLectureId!;
       final levelId = AttendanceService.instance.currentLevelId!;
       final subjectId = AttendanceService.instance.currentSubjectId!;
-      final presentCodes = AttendanceService.instance.presentStudents.map((s) => s['code']!).toList();
+      final presentCodes = AttendanceService.instance.presentStudents
+          .map((s) => s['code']!)
+          .toList();
       final tid = widget.teacherId.isNotEmpty ? widget.teacherId : 'admin';
 
       await ApiService.endSession(
@@ -168,11 +194,23 @@ class _SmartAttendanceScreenState extends State<SmartAttendanceScreen> {
 
       AttendanceService.instance.endSession();
       messenger.showSnackBar(
-        SnackBar(content: Text('تم إنهاء التحضير ومعالجة الغياب بنجاح', style: GoogleFonts.cairo()), backgroundColor: Colors.green),
+        SnackBar(
+          content: Text(
+            'تم إنهاء التحضير ومعالجة الغياب بنجاح',
+            style: GoogleFonts.cairo(),
+          ),
+          backgroundColor: Colors.green,
+        ),
       );
     } catch (_) {
       messenger.showSnackBar(
-        SnackBar(content: Text('حدث خطأ أثناء إنهاء الجلسة', style: GoogleFonts.cairo()), backgroundColor: Colors.red),
+        SnackBar(
+          content: Text(
+            'حدث خطأ أثناء إنهاء الجلسة',
+            style: GoogleFonts.cairo(),
+          ),
+          backgroundColor: Colors.red,
+        ),
       );
     }
     if (mounted) setState(() => _isEnding = false);
@@ -195,15 +233,28 @@ class _SmartAttendanceScreenState extends State<SmartAttendanceScreen> {
           ),
         ),
         leading: IconButton(
-          icon: Icon(LucideIcons.arrowRight, color: theme.colorScheme.onSurface),
+          icon: Icon(
+            LucideIcons.arrowRight,
+            color: theme.colorScheme.onSurface,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
           if (AttendanceService.instance.isSessionActive)
             TextButton.icon(
               onPressed: _isEnding ? null : _endPreparation,
-              icon: const Icon(LucideIcons.stopCircle, color: Colors.red, size: 18),
-              label: Text('إنهاء الآن', style: GoogleFonts.cairo(color: Colors.red, fontWeight: FontWeight.bold)),
+              icon: const Icon(
+                LucideIcons.stopCircle,
+                color: Colors.red,
+                size: 18,
+              ),
+              label: Text(
+                'إنهاء الآن',
+                style: GoogleFonts.cairo(
+                  color: Colors.red,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
           const SizedBox(width: 8),
         ],
@@ -246,12 +297,13 @@ class _SmartAttendanceScreenState extends State<SmartAttendanceScreen> {
                     ),
                   ),
                   const SizedBox(height: 32),
-                  
+
                   Container(
                     height: 250,
                     width: 250,
                     decoration: BoxDecoration(
-                      color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                      color: theme.colorScheme.surfaceContainerHighest
+                          .withValues(alpha: 0.3),
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(color: theme.dividerColor),
                     ),
@@ -260,20 +312,34 @@ class _SmartAttendanceScreenState extends State<SmartAttendanceScreen> {
                           ? Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(LucideIcons.qrCode, size: 64, color: theme.textTheme.bodySmall?.color),
+                                Icon(
+                                  LucideIcons.qrCode,
+                                  size: 64,
+                                  color: theme.textTheme.bodySmall?.color,
+                                ),
                                 const SizedBox(height: 16),
                                 Text(
                                   'اضغط توليد لإنشاء الرمز',
-                                  style: GoogleFonts.cairo(color: theme.textTheme.bodySmall?.color),
+                                  style: GoogleFonts.cairo(
+                                    color: theme.textTheme.bodySmall?.color,
+                                  ),
                                 ),
                               ],
                             )
                           : QrImageView(
-                              data: AttendanceService.instance.currentQrPayload ?? AttendanceService.instance.currentCode!,
+                              data:
+                                  AttendanceService.instance.currentQrPayload ??
+                                  AttendanceService.instance.currentCode!,
                               version: QrVersions.auto,
                               size: 200.0,
-                              eyeStyle: QrEyeStyle(eyeShape: QrEyeShape.square, color: theme.colorScheme.primary),
-                              dataModuleStyle: QrDataModuleStyle(dataModuleShape: QrDataModuleShape.square, color: theme.colorScheme.primary),
+                              eyeStyle: QrEyeStyle(
+                                eyeShape: QrEyeShape.square,
+                                color: theme.colorScheme.primary,
+                              ),
+                              dataModuleStyle: QrDataModuleStyle(
+                                dataModuleShape: QrDataModuleShape.square,
+                                color: theme.colorScheme.primary,
+                              ),
                             ),
                     ),
                   ),
@@ -293,11 +359,19 @@ class _SmartAttendanceScreenState extends State<SmartAttendanceScreen> {
                           ),
                           const SizedBox(height: 8),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 24,
+                              vertical: 8,
+                            ),
                             decoration: BoxDecoration(
-                              color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                              color: theme.colorScheme.surfaceContainerHighest
+                                  .withValues(alpha: 0.3),
                               borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.3)),
+                              border: Border.all(
+                                color: theme.colorScheme.primary.withValues(
+                                  alpha: 0.3,
+                                ),
+                              ),
                             ),
                             child: Text(
                               AttendanceService.instance.currentCode ?? '',
@@ -321,9 +395,9 @@ class _SmartAttendanceScreenState extends State<SmartAttendanceScreen> {
                         ],
                       ),
                     ),
-                  
+
                   const SizedBox(height: 32),
-                  
+
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
@@ -340,7 +414,10 @@ class _SmartAttendanceScreenState extends State<SmartAttendanceScreen> {
                           ? const SizedBox(
                               height: 24,
                               width: 24,
-                              child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
                             )
                           : Row(
                               mainAxisAlignment: MainAxisAlignment.center,
@@ -361,20 +438,30 @@ class _SmartAttendanceScreenState extends State<SmartAttendanceScreen> {
                 ],
               ),
             ),
-            
+
             const SizedBox(height: 24),
-            
+
             if (AttendanceService.instance.isSessionActive)
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     'الطلاب الحاضرون (${_attendees.length})',
-                    style: GoogleFonts.cairo(fontSize: 18, fontWeight: FontWeight.bold),
+                    style: GoogleFonts.cairo(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: 12),
                   if (_attendees.isEmpty)
-                    Center(child: Text('لا يوجد طلاب مسجلون حالياً', style: GoogleFonts.cairo(color: theme.textTheme.bodySmall?.color)))
+                    Center(
+                      child: Text(
+                        'لا يوجد طلاب مسجلون حالياً',
+                        style: GoogleFonts.cairo(
+                          color: theme.textTheme.bodySmall?.color,
+                        ),
+                      ),
+                    )
                   else
                     ListView.builder(
                       shrinkWrap: true,
@@ -386,14 +473,35 @@ class _SmartAttendanceScreenState extends State<SmartAttendanceScreen> {
                           margin: const EdgeInsets.only(bottom: 8),
                           child: ListTile(
                             leading: CircleAvatar(
-                              backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
-                              child: Text(student['name']?[0] ?? 'S', style: TextStyle(color: theme.colorScheme.primary)),
+                              backgroundColor: theme.colorScheme.primary
+                                  .withValues(alpha: 0.1),
+                              child: Text(
+                                student['name']?[0] ?? 'S',
+                                style: TextStyle(
+                                  color: theme.colorScheme.primary,
+                                ),
+                              ),
                             ),
-                            title: Text(student['name'] ?? '', style: GoogleFonts.cairo(fontWeight: FontWeight.bold)),
-                            subtitle: Text(student['code'] ?? '', style: GoogleFonts.cairo(fontSize: 12)),
+                            title: Text(
+                              student['name'] ?? '',
+                              style: GoogleFonts.cairo(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            subtitle: Text(
+                              student['code'] ?? '',
+                              style: GoogleFonts.cairo(fontSize: 12),
+                            ),
                             trailing: Text(
-                              DateTime.parse(student['time']!).toLocal().toString().split(' ')[1].substring(0, 5),
-                              style: GoogleFonts.cairo(fontSize: 12, color: theme.textTheme.bodySmall?.color),
+                              DateTime.parse(student['time']!)
+                                  .toLocal()
+                                  .toString()
+                                  .split(' ')[1]
+                                  .substring(0, 5),
+                              style: GoogleFonts.cairo(
+                                fontSize: 12,
+                                color: theme.textTheme.bodySmall?.color,
+                              ),
                             ),
                           ),
                         );

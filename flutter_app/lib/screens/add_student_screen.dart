@@ -14,8 +14,12 @@ class AddStudentScreen extends StatefulWidget {
 class _AddStudentScreenState extends State<AddStudentScreen> {
   final _nameController = TextEditingController();
   final _codeController = TextEditingController(); // acts as ID and Code
-  final _departmentController = TextEditingController(text: 'إعلام تربوي'); // Default
-  final _levelController = TextEditingController(text: 'الفرقة الثانية'); // Default
+  final _departmentController = TextEditingController(
+    text: 'إعلام تربوي',
+  ); // Default
+  final _levelController = TextEditingController(
+    text: 'الفرقة الثانية',
+  ); // Default
   final List<String> _departments = const [
     'تكنولوجيا التعليم',
     'الحاسب الآلي',
@@ -46,7 +50,12 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
     final messenger = ScaffoldMessenger.of(context);
     if (_nameController.text.isEmpty || _codeController.text.isEmpty) {
       messenger.showSnackBar(
-        SnackBar(content: Text('يرجى ملء جميع الحقول المطلوبة', style: GoogleFonts.cairo())),
+        SnackBar(
+          content: Text(
+            'يرجى ملء جميع الحقول المطلوبة',
+            style: GoogleFonts.cairo(),
+          ),
+        ),
       );
       return;
     }
@@ -64,22 +73,23 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: context.appBackground,
         appBar: AppBar(
-          backgroundColor: AppColors.white,
+          backgroundColor: context.appSurface,
           elevation: 0,
           title: Text(
             'إضافة طالب جديد',
             style: GoogleFonts.cairo(
-              color: AppColors.text,
+              color: context.appText,
               fontWeight: FontWeight.bold,
             ),
           ),
           leading: IconButton(
-            icon: const Icon(LucideIcons.arrowRight, color: AppColors.text),
+            icon: Icon(LucideIcons.arrowRight, color: context.appText),
             onPressed: () => Navigator.pop(context),
           ),
         ),
@@ -95,11 +105,15 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
                       width: 100,
                       height: 100,
                       decoration: BoxDecoration(
-                        color: AppColors.white,
+                        color: context.appSurface,
                         shape: BoxShape.circle,
-                        border: Border.all(color: AppColors.inputBorder),
+                        border: Border.all(color: context.appBorder),
                       ),
-                      child: const Icon(LucideIcons.user, size: 40, color: AppColors.textLight),
+                      child: Icon(
+                        LucideIcons.user,
+                        size: 40,
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
                     ),
                     Positioned(
                       bottom: 0,
@@ -110,7 +124,11 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
                           color: AppColors.primary,
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(LucideIcons.camera, size: 16, color: Colors.white),
+                        child: const Icon(
+                          LucideIcons.camera,
+                          size: 16,
+                          color: Colors.white,
+                        ),
                       ),
                     ),
                   ],
@@ -131,9 +149,19 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
                 isNumber: false,
               ),
               const SizedBox(height: 16),
-              _buildDropdown('القسم', LucideIcons.graduationCap, _departments, _departmentController),
+              _buildDropdown(
+                'القسم',
+                LucideIcons.graduationCap,
+                _departments,
+                _departmentController,
+              ),
               const SizedBox(height: 16),
-              _buildDropdown('الفرقة الدراسية', LucideIcons.layers, _levels, _levelController),
+              _buildDropdown(
+                'الفرقة الدراسية',
+                LucideIcons.layers,
+                _levels,
+                _levelController,
+              ),
               const SizedBox(height: 32),
 
               SizedBox(
@@ -178,7 +206,7 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
           style: GoogleFonts.cairo(
             fontSize: 14,
             fontWeight: FontWeight.bold,
-            color: AppColors.text,
+            color: context.appText,
           ),
         ),
         const SizedBox(height: 8),
@@ -186,23 +214,34 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
           controller: controller,
           keyboardType: isNumber ? TextInputType.number : TextInputType.text,
           decoration: InputDecoration(
-            prefixIcon: Icon(icon, color: AppColors.textLight, size: 20),
+            prefixIcon: Icon(icon, color: context.appTextLight, size: 20),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: const BorderSide(color: AppColors.inputBorder),
             ),
             filled: true,
-            fillColor: AppColors.white,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            fillColor: context.appSurface,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 14,
+            ),
           ),
         ),
       ],
     );
   }
-  
-  Widget _buildDropdown(String label, IconData icon, List<String> items, TextEditingController controller) {
-    final currentValue = controller.text.isNotEmpty ? controller.text : (items.isNotEmpty ? items.first : '');
-    if (controller.text.isEmpty && items.isNotEmpty) controller.text = items.first;
+
+  Widget _buildDropdown(
+    String label,
+    IconData icon,
+    List<String> items,
+    TextEditingController controller,
+  ) {
+    final currentValue = controller.text.isNotEmpty
+        ? controller.text
+        : (items.isNotEmpty ? items.first : '');
+    if (controller.text.isEmpty && items.isNotEmpty)
+      controller.text = items.first;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -211,34 +250,39 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
           style: GoogleFonts.cairo(
             fontSize: 14,
             fontWeight: FontWeight.bold,
-            color: AppColors.text,
+            color: context.appText,
           ),
         ),
         const SizedBox(height: 8),
         DropdownButtonFormField<String>(
           initialValue: currentValue,
           items: items
-              .map((e) => DropdownMenuItem<String>(
-                    value: e,
-                    child: Align(
-                      alignment: Alignment.centerRight,
-                      child: Text(e, style: GoogleFonts.cairo()),
-                    ),
-                  ))
+              .map(
+                (e) => DropdownMenuItem<String>(
+                  value: e,
+                  child: Align(
+                    alignment: Alignment.centerRight,
+                    child: Text(e, style: GoogleFonts.cairo()),
+                  ),
+                ),
+              )
               .toList(),
           onChanged: (v) {
             if (v != null) controller.text = v;
             setState(() {});
           },
           decoration: InputDecoration(
-            prefixIcon: Icon(icon, color: AppColors.textLight, size: 20),
+            prefixIcon: Icon(icon, color: context.appTextLight, size: 20),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: const BorderSide(color: AppColors.inputBorder),
             ),
             filled: true,
-            fillColor: AppColors.white,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            fillColor: context.appSurface,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 14,
+            ),
           ),
         ),
       ],

@@ -14,10 +14,12 @@ class CumulativeAttendanceReportScreen extends StatefulWidget {
   });
 
   @override
-  State<CumulativeAttendanceReportScreen> createState() => _CumulativeAttendanceReportScreenState();
+  State<CumulativeAttendanceReportScreen> createState() =>
+      _CumulativeAttendanceReportScreenState();
 }
 
-class _CumulativeAttendanceReportScreenState extends State<CumulativeAttendanceReportScreen> {
+class _CumulativeAttendanceReportScreenState
+    extends State<CumulativeAttendanceReportScreen> {
   bool _loading = true;
   List<Map<String, dynamic>> _reportData = [];
 
@@ -63,7 +65,10 @@ class _CumulativeAttendanceReportScreenState extends State<CumulativeAttendanceR
             ),
           ),
           leading: IconButton(
-            icon: Icon(LucideIcons.arrowRight, color: theme.colorScheme.onSurface),
+            icon: Icon(
+              LucideIcons.arrowRight,
+              color: theme.colorScheme.onSurface,
+            ),
             onPressed: () => Navigator.pop(context),
           ),
           actions: [
@@ -76,88 +81,168 @@ class _CumulativeAttendanceReportScreenState extends State<CumulativeAttendanceR
         body: _loading
             ? const Center(child: CircularProgressIndicator())
             : _reportData.isEmpty
-                ? Center(child: Text('لا توجد بيانات حضور مسجلة لهذه الفرقة', style: GoogleFonts.cairo()))
-                : SingleChildScrollView(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        // Summary Card
-                        Container(
-                          padding: const EdgeInsets.all(20),
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.2)),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceAround,
-                            children: [
-                              _buildSummaryItem('عدد الطلاب', _reportData.length.toString(), LucideIcons.users),
-                              _buildSummaryItem('إجمالي المحاضرات', (_reportData.isNotEmpty ? _reportData[0]['totalLectures'] : 0).toString(), LucideIcons.bookOpen),
-                            ],
+            ? Center(
+                child: Text(
+                  'لا توجد بيانات حضور مسجلة لهذه الفرقة',
+                  style: GoogleFonts.cairo(),
+                ),
+              )
+            : SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Summary Card
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: theme.colorScheme.primary.withValues(
+                            alpha: 0.2,
                           ),
                         ),
-                        const SizedBox(height: 24),
-                        // Table
-                        Container(
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.surface,
-                            borderRadius: BorderRadius.circular(16),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.05),
-                                blurRadius: 10,
-                                offset: const Offset(0, 4),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          _buildSummaryItem(
+                            'عدد الطلاب',
+                            _reportData.length.toString(),
+                            LucideIcons.users,
+                          ),
+                          _buildSummaryItem(
+                            'إجمالي المحاضرات',
+                            (_reportData.isNotEmpty
+                                    ? _reportData[0]['totalLectures']
+                                    : 0)
+                                .toString(),
+                            LucideIcons.bookOpen,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    // Table
+                    Container(
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.surface,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(
+                              alpha: isDark ? 0.2 : 0.05,
+                            ),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                        border: Border.all(color: theme.dividerColor),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(16),
+                        child: SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: DataTable(
+                            headingRowColor: WidgetStateProperty.all(
+                              theme.colorScheme.primary.withValues(alpha: 0.05),
+                            ),
+                            columns: [
+                              DataColumn(
+                                label: Text(
+                                  'اسم الطالب',
+                                  style: GoogleFonts.cairo(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                              DataColumn(
+                                label: Text(
+                                  'المحاضرات',
+                                  style: GoogleFonts.cairo(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                              DataColumn(
+                                label: Text(
+                                  'الحضور',
+                                  style: GoogleFonts.cairo(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                              DataColumn(
+                                label: Text(
+                                  'النسبة',
+                                  style: GoogleFonts.cairo(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                               ),
                             ],
-                            border: Border.all(color: theme.dividerColor),
-                          ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(16),
-                            child: SingleChildScrollView(
-                              scrollDirection: Axis.horizontal,
-                              child: DataTable(
-                                headingRowColor: WidgetStateProperty.all(theme.colorScheme.primary.withValues(alpha: 0.05)),
-                                columns: [
-                                  DataColumn(label: Text('اسم الطالب', style: GoogleFonts.cairo(fontWeight: FontWeight.bold))),
-                                  DataColumn(label: Text('المحاضرات', style: GoogleFonts.cairo(fontWeight: FontWeight.bold))),
-                                  DataColumn(label: Text('الحضور', style: GoogleFonts.cairo(fontWeight: FontWeight.bold))),
-                                  DataColumn(label: Text('النسبة', style: GoogleFonts.cairo(fontWeight: FontWeight.bold))),
-                                ],
-                                rows: _reportData.map((s) {
-                                  final double percentage = (s['percentage'] as num).toDouble();
-                                  Color statusColor = Colors.green;
-                                  if (percentage < 50) {
-                                    statusColor = Colors.red;
-                                  } else if (percentage < 75) statusColor = Colors.orange;
+                            rows: _reportData.map((s) {
+                              final double percentage = (s['percentage'] as num)
+                                  .toDouble();
+                              Color statusColor = Colors.green;
+                              if (percentage < 50) {
+                                statusColor = Colors.red;
+                              } else if (percentage < 75)
+                                statusColor = Colors.orange;
 
-                                  return DataRow(cells: [
-                                    DataCell(Text(s['studentName'] ?? '', style: GoogleFonts.cairo(fontSize: 13))),
-                                    DataCell(Text(s['totalLectures'].toString(), textAlign: TextAlign.center)),
-                                    DataCell(Text(s['presentCount'].toString(), textAlign: TextAlign.center)),
-                                    DataCell(
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                        decoration: BoxDecoration(
-                                          color: statusColor.withValues(alpha: 0.1),
-                                          borderRadius: BorderRadius.circular(8),
+                              return DataRow(
+                                cells: [
+                                  DataCell(
+                                    Text(
+                                      s['studentName'] ?? '',
+                                      style: GoogleFonts.cairo(fontSize: 13),
+                                    ),
+                                  ),
+                                  DataCell(
+                                    Text(
+                                      s['totalLectures'].toString(),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ),
+                                  DataCell(
+                                    Text(
+                                      s['presentCount'].toString(),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ),
+                                  DataCell(
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 4,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: statusColor.withValues(
+                                          alpha: 0.1,
                                         ),
-                                        child: Text(
-                                          '${percentage.toStringAsFixed(1)}%',
-                                          style: GoogleFonts.cairo(color: statusColor, fontWeight: FontWeight.bold, fontSize: 12),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Text(
+                                        '${percentage.toStringAsFixed(1)}%',
+                                        style: GoogleFonts.cairo(
+                                          color: statusColor,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 12,
                                         ),
                                       ),
                                     ),
-                                  ]);
-                                }).toList(),
-                              ),
-                            ),
+                                  ),
+                                ],
+                              );
+                            }).toList(),
                           ),
                         ),
-                      ],
+                      ),
                     ),
-                  ),
+                  ],
+                ),
+              ),
       ),
     );
   }
@@ -168,8 +253,21 @@ class _CumulativeAttendanceReportScreenState extends State<CumulativeAttendanceR
       children: [
         Icon(icon, color: theme.colorScheme.primary, size: 24),
         const SizedBox(height: 8),
-        Text(value, style: GoogleFonts.cairo(fontSize: 20, fontWeight: FontWeight.bold, color: theme.colorScheme.primary)),
-        Text(label, style: GoogleFonts.cairo(fontSize: 12, color: theme.textTheme.bodySmall?.color)),
+        Text(
+          value,
+          style: GoogleFonts.cairo(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: theme.colorScheme.primary,
+          ),
+        ),
+        Text(
+          label,
+          style: GoogleFonts.cairo(
+            fontSize: 12,
+            color: theme.textTheme.bodySmall?.color,
+          ),
+        ),
       ],
     );
   }

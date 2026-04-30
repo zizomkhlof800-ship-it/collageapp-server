@@ -29,9 +29,11 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
   }
 
   Future<void> _initializePlayer() async {
-    _videoPlayerController = VideoPlayerController.networkUrl(Uri.parse(widget.videoUrl));
+    _videoPlayerController = VideoPlayerController.networkUrl(
+      Uri.parse(widget.videoUrl),
+    );
     await _videoPlayerController.initialize();
-    
+
     _chewieController = ChewieController(
       videoPlayerController: _videoPlayerController,
       autoPlay: true,
@@ -66,14 +68,18 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        title: Text(widget.title, style: GoogleFonts.cairo(color: Colors.white)),
+        title: Text(
+          widget.title,
+          style: GoogleFonts.cairo(color: Colors.white),
+        ),
         leading: IconButton(
           icon: const Icon(LucideIcons.arrowRight, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
       ),
       body: Center(
-        child: _chewieController != null &&
+        child:
+            _chewieController != null &&
                 _chewieController!.videoPlayerController.value.isInitialized
             ? Chewie(controller: _chewieController!)
             : const CircularProgressIndicator(),

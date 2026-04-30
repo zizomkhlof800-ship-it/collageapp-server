@@ -33,7 +33,7 @@ class ImageViewerScreen extends StatelessWidget {
         padding: const EdgeInsets.all(24),
         child: Text(
           'تعذر تحميل الصورة',
-          style: GoogleFonts.cairo(color: AppColors.textLight),
+          style: GoogleFonts.cairo(color: context.appTextLight),
         ),
       ),
     );

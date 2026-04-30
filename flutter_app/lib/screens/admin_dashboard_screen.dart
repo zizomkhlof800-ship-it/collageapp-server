@@ -250,7 +250,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       icon: Icon(
                         _isDeleteMode ? LucideIcons.x : LucideIcons.trash2,
                         size: 20,
-                        color: _isDeleteMode ? Colors.red : AppColors.textLight,
+                        color: _isDeleteMode
+                            ? Colors.red
+                            : context.appTextLight,
                       ),
                       tooltip: _isDeleteMode ? 'إلغاء الحذف' : 'حذف إعلان',
                     ),
@@ -581,7 +583,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 'لديك صلاحيات كاملة لإدارة النظام',
                 style: GoogleFonts.cairo(
                   fontSize: 14,
-                  color: isDark ? Colors.grey[400] : AppColors.textLight,
+                  color: isDark ? Colors.grey[400] : context.appTextLight,
                 ),
               ),
             ],
@@ -643,7 +645,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               subtitle,
               style: GoogleFonts.cairo(
                 fontSize: 12,
-                color: isDark ? Colors.grey[400] : AppColors.textLight,
+                color: isDark ? Colors.grey[400] : context.appTextLight,
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -725,7 +727,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           Text(
             message,
             style: GoogleFonts.cairo(
-              color: isDark ? Colors.grey[400] : AppColors.textLight,
+              color: isDark ? Colors.grey[400] : context.appTextLight,
               fontSize: 14,
             ),
           ),
@@ -804,7 +806,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   announcement.content,
                   style: GoogleFonts.cairo(
                     fontSize: 12,
-                    color: isDark ? Colors.grey[400] : AppColors.textLight,
+                    color: isDark ? Colors.grey[400] : context.appTextLight,
                   ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,

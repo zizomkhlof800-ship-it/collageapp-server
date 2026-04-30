@@ -67,19 +67,19 @@ class _AddAnnouncementScreenState extends State<AddAnnouncementScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.appBackground,
       appBar: AppBar(
-        backgroundColor: AppColors.white,
+        backgroundColor: context.appSurface,
         elevation: 0,
         title: Text(
           'إضافة إعلان جديد',
           style: GoogleFonts.cairo(
-            color: AppColors.text,
+            color: context.appText,
             fontWeight: FontWeight.bold,
           ),
         ),
         leading: IconButton(
-          icon: const Icon(LucideIcons.arrowRight, color: AppColors.text),
+          icon: Icon(LucideIcons.arrowRight, color: context.appText),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -93,7 +93,7 @@ class _AddAnnouncementScreenState extends State<AddAnnouncementScreen> {
               style: GoogleFonts.cairo(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
-                color: AppColors.text,
+                color: context.appText,
               ),
             ),
             const SizedBox(height: 8),
@@ -101,23 +101,23 @@ class _AddAnnouncementScreenState extends State<AddAnnouncementScreen> {
               controller: _titleController,
               decoration: InputDecoration(
                 hintText: 'مثال: تغيير موعد محاضرة البرمجة',
-                hintStyle: GoogleFonts.cairo(color: AppColors.textLight),
+                hintStyle: GoogleFonts.cairo(color: context.appTextLight),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: const BorderSide(color: AppColors.inputBorder),
                 ),
                 filled: true,
-                fillColor: AppColors.white,
+                fillColor: context.appSurface,
               ),
             ),
             const SizedBox(height: 24),
-            
+
             Text(
               'مستوى الأهمية',
               style: GoogleFonts.cairo(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
-                color: AppColors.text,
+                color: context.appText,
               ),
             ),
             const SizedBox(height: 8),
@@ -128,31 +128,48 @@ class _AddAnnouncementScreenState extends State<AddAnnouncementScreen> {
                 ),
                 const SizedBox(width: 16),
                 Expanded(
-                  child: _buildPriorityOption('هام جداً', AppColors.cardRedIcon),
+                  child: _buildPriorityOption(
+                    'هام جداً',
+                    AppColors.cardRedIcon,
+                  ),
                 ),
               ],
             ),
             const SizedBox(height: 24),
-            
+
             Text(
               'القسم',
               style: GoogleFonts.cairo(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
-                color: AppColors.text,
+                color: context.appText,
               ),
             ),
             const SizedBox(height: 8),
             DropdownButtonFormField<String>(
               initialValue: _selectedDepartment,
-              items: _departments.map((e) => DropdownMenuItem<String>(
-                value: e,
-                child: Align(alignment: Alignment.centerRight, child: Text(e, style: GoogleFonts.cairo())),
-              )).toList(),
-              onChanged: (v) => setState(() => _selectedDepartment = v ?? _selectedDepartment),
+              items: _departments
+                  .map(
+                    (e) => DropdownMenuItem<String>(
+                      value: e,
+                      child: Align(
+                        alignment: Alignment.centerRight,
+                        child: Text(e, style: GoogleFonts.cairo()),
+                      ),
+                    ),
+                  )
+                  .toList(),
+              onChanged: (v) => setState(
+                () => _selectedDepartment = v ?? _selectedDepartment,
+              ),
               decoration: InputDecoration(
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 14,
+                ),
               ),
             ),
             const SizedBox(height: 16),
@@ -161,20 +178,33 @@ class _AddAnnouncementScreenState extends State<AddAnnouncementScreen> {
               style: GoogleFonts.cairo(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
-                color: AppColors.text,
+                color: context.appText,
               ),
             ),
             const SizedBox(height: 8),
             DropdownButtonFormField<String>(
               initialValue: _selectedLevel,
-              items: _levels.map((e) => DropdownMenuItem<String>(
-                value: e,
-                child: Align(alignment: Alignment.centerRight, child: Text(e, style: GoogleFonts.cairo())),
-              )).toList(),
-              onChanged: (v) => setState(() => _selectedLevel = v ?? _selectedLevel),
+              items: _levels
+                  .map(
+                    (e) => DropdownMenuItem<String>(
+                      value: e,
+                      child: Align(
+                        alignment: Alignment.centerRight,
+                        child: Text(e, style: GoogleFonts.cairo()),
+                      ),
+                    ),
+                  )
+                  .toList(),
+              onChanged: (v) =>
+                  setState(() => _selectedLevel = v ?? _selectedLevel),
               decoration: InputDecoration(
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 14,
+                ),
               ),
             ),
             const SizedBox(height: 24),
@@ -184,7 +214,7 @@ class _AddAnnouncementScreenState extends State<AddAnnouncementScreen> {
               style: GoogleFonts.cairo(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
-                color: AppColors.text,
+                color: context.appText,
               ),
             ),
             const SizedBox(height: 8),
@@ -207,18 +237,24 @@ class _AddAnnouncementScreenState extends State<AddAnnouncementScreen> {
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.grey[100],
-                    foregroundColor: AppColors.text,
+                    foregroundColor: context.appText,
                     elevation: 0,
                   ),
                   icon: const Icon(LucideIcons.image),
-                  label: Text(_imageName.isEmpty ? 'اختيار صورة' : 'تغيير الصورة', style: GoogleFonts.cairo()),
+                  label: Text(
+                    _imageName.isEmpty ? 'اختيار صورة' : 'تغيير الصورة',
+                    style: GoogleFonts.cairo(),
+                  ),
                 ),
                 const SizedBox(width: 12),
                 if (_imageName.isNotEmpty)
                   Expanded(
                     child: Text(
                       _imageName,
-                      style: GoogleFonts.cairo(fontSize: 12, color: AppColors.textLight),
+                      style: GoogleFonts.cairo(
+                        fontSize: 12,
+                        color: context.appTextLight,
+                      ),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
@@ -233,7 +269,11 @@ class _AddAnnouncementScreenState extends State<AddAnnouncementScreen> {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 padding: const EdgeInsets.all(8),
-                child: Image.memory(_imageBytes!, height: 140, fit: BoxFit.contain),
+                child: Image.memory(
+                  _imageBytes!,
+                  height: 140,
+                  fit: BoxFit.contain,
+                ),
               ),
             const SizedBox(height: 24),
 
@@ -242,7 +282,7 @@ class _AddAnnouncementScreenState extends State<AddAnnouncementScreen> {
               style: GoogleFonts.cairo(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
-                color: AppColors.text,
+                color: context.appText,
               ),
             ),
             const SizedBox(height: 8),
@@ -250,22 +290,27 @@ class _AddAnnouncementScreenState extends State<AddAnnouncementScreen> {
               onTap: () => _selectDate(context),
               borderRadius: BorderRadius.circular(12),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 16,
+                ),
                 decoration: BoxDecoration(
-                  color: AppColors.white,
+                  color: context.appSurface,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.inputBorder),
+                  border: Border.all(color: context.appBorder),
                 ),
                 child: Row(
                   children: [
-                    Icon(LucideIcons.calendar, color: AppColors.textLight),
+                    Icon(LucideIcons.calendar, color: context.appTextLight),
                     const SizedBox(width: 12),
                     Text(
                       _selectedDate == null
                           ? 'اختر وقت النشر'
                           : '${_selectedDate!.year}-${_selectedDate!.month}-${_selectedDate!.day} ${_selectedDate!.hour}:${_selectedDate!.minute.toString().padLeft(2, '0')}',
                       style: GoogleFonts.cairo(
-                        color: _selectedDate == null ? AppColors.textLight : AppColors.text,
+                        color: _selectedDate == null
+                            ? context.appTextLight
+                            : context.appText,
                         fontSize: 14,
                       ),
                     ),
@@ -280,7 +325,7 @@ class _AddAnnouncementScreenState extends State<AddAnnouncementScreen> {
               style: GoogleFonts.cairo(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
-                color: AppColors.text,
+                color: context.appText,
               ),
             ),
             const SizedBox(height: 8),
@@ -289,13 +334,13 @@ class _AddAnnouncementScreenState extends State<AddAnnouncementScreen> {
               maxLines: 6,
               decoration: InputDecoration(
                 hintText: 'اكتب تفاصيل الإعلان هنا...',
-                hintStyle: GoogleFonts.cairo(color: AppColors.textLight),
+                hintStyle: GoogleFonts.cairo(color: context.appTextLight),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: const BorderSide(color: AppColors.inputBorder),
                 ),
                 filled: true,
-                fillColor: AppColors.white,
+                fillColor: context.appSurface,
               ),
             ),
             const SizedBox(height: 32),
@@ -305,24 +350,29 @@ class _AddAnnouncementScreenState extends State<AddAnnouncementScreen> {
               child: ElevatedButton(
                 onPressed: () {
                   final messenger = ScaffoldMessenger.of(context);
-                  if (_titleController.text.isEmpty || _contentController.text.isEmpty) {
+                  if (_titleController.text.isEmpty ||
+                      _contentController.text.isEmpty) {
                     messenger.showSnackBar(
                       SnackBar(
-                        content: Text('يرجى ملء جميع الحقول', style: GoogleFonts.cairo()),
+                        content: Text(
+                          'يرجى ملء جميع الحقول',
+                          style: GoogleFonts.cairo(),
+                        ),
                         backgroundColor: Colors.red,
                       ),
                     );
                     return;
                   }
 
-                  final titleText = '$_selectedDepartment - $_selectedLevel | ${_titleController.text}';
+                  final titleText =
+                      '$_selectedDepartment - $_selectedLevel | ${_titleController.text}';
                   final newAnnouncement = Announcement(
                     id: DateTime.now().millisecondsSinceEpoch.toString(),
                     title: titleText,
                     content: _contentController.text,
                     priority: _selectedPriority,
-                    date: _selectedDate == null 
-                        ? 'الآن' 
+                    date: _selectedDate == null
+                        ? 'الآن'
                         : '${_selectedDate!.year}-${_selectedDate!.month}-${_selectedDate!.day} ${_selectedDate!.hour}:${_selectedDate!.minute.toString().padLeft(2, '0')}',
                     imageName: _imageName,
                     imageBase64: _imageBytes == null
@@ -330,7 +380,9 @@ class _AddAnnouncementScreenState extends State<AddAnnouncementScreen> {
                         : (() {
                             final lower = _imageName.toLowerCase();
                             String mime = 'image/png';
-                            if (lower.endsWith('.jpg') || lower.endsWith('.jpeg')) mime = 'image/jpeg';
+                            if (lower.endsWith('.jpg') ||
+                                lower.endsWith('.jpeg'))
+                              mime = 'image/jpeg';
                             if (lower.endsWith('.webp')) mime = 'image/webp';
                             return 'data:$mime;base64,${base64Encode(_imageBytes!)}';
                           })(),
@@ -338,7 +390,10 @@ class _AddAnnouncementScreenState extends State<AddAnnouncementScreen> {
 
                   messenger.showSnackBar(
                     SnackBar(
-                      content: Text('تم نشر الإعلان بنجاح', style: GoogleFonts.cairo()),
+                      content: Text(
+                        'تم نشر الإعلان بنجاح',
+                        style: GoogleFonts.cairo(),
+                      ),
                       backgroundColor: AppColors.cardGreenIcon,
                     ),
                   );
@@ -367,7 +422,6 @@ class _AddAnnouncementScreenState extends State<AddAnnouncementScreen> {
     );
   }
 
-
   Widget _buildPriorityOption(String label, Color color) {
     final isSelected = _selectedPriority == label;
     return GestureDetector(
@@ -379,7 +433,7 @@ class _AddAnnouncementScreenState extends State<AddAnnouncementScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
-          color: isSelected ? color.withOpacity(0.1) : AppColors.white,
+          color: isSelected ? color.withValues(alpha: 0.1) : context.appSurface,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isSelected ? color : AppColors.inputBorder,
@@ -392,7 +446,7 @@ class _AddAnnouncementScreenState extends State<AddAnnouncementScreen> {
             style: GoogleFonts.cairo(
               fontSize: 14,
               fontWeight: FontWeight.bold,
-              color: isSelected ? color : AppColors.textLight,
+              color: isSelected ? color : context.appTextLight,
             ),
           ),
         ),

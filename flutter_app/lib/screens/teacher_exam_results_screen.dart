@@ -8,7 +8,8 @@ class TeacherExamResultsScreen extends StatefulWidget {
   const TeacherExamResultsScreen({super.key});
 
   @override
-  State<TeacherExamResultsScreen> createState() => _TeacherExamResultsScreenState();
+  State<TeacherExamResultsScreen> createState() =>
+      _TeacherExamResultsScreenState();
 }
 
 class _TeacherExamResultsScreenState extends State<TeacherExamResultsScreen> {
@@ -41,11 +42,17 @@ class _TeacherExamResultsScreenState extends State<TeacherExamResultsScreen> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: const Color(0xFFF8F9FA),
+        backgroundColor: context.appBackground,
         appBar: AppBar(
-          backgroundColor: Colors.white,
+          backgroundColor: context.appSurface,
           elevation: 0,
-          title: Text('نتائج الاختبارات', style: GoogleFonts.cairo(color: AppColors.text, fontWeight: FontWeight.bold)),
+          title: Text(
+            'نتائج الاختبارات',
+            style: GoogleFonts.cairo(
+              color: context.appText,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
           leading: IconButton(
             icon: const Icon(LucideIcons.arrowRight, color: AppColors.primary),
             onPressed: () => Navigator.pop(context),
@@ -61,11 +68,24 @@ class _TeacherExamResultsScreenState extends State<TeacherExamResultsScreen> {
                     return Container(
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: context.appSurface,
                         borderRadius: BorderRadius.circular(16),
-                        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4))],
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(
+                              alpha: context.isDarkMode ? 0.18 : 0.03,
+                            ),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
                       ),
-                      child: Center(child: Text('لا توجد اختبارات حالياً', style: GoogleFonts.cairo(color: AppColors.textLight))),
+                      child: Center(
+                        child: Text(
+                          'لا توجد اختبارات حالياً',
+                          style: GoogleFonts.cairo(color: context.appTextLight),
+                        ),
+                      ),
                     );
                   }
                   final e = _exams[index];
@@ -73,7 +93,8 @@ class _TeacherExamResultsScreenState extends State<TeacherExamResultsScreen> {
                   final department = (e['department'] ?? '').toString();
                   final level = (e['level'] ?? '').toString();
                   final tf = int.tryParse((e['tfCount'] ?? 0).toString()) ?? 0;
-                  final mcq = int.tryParse((e['mcqCount'] ?? 0).toString()) ?? 0;
+                  final mcq =
+                      int.tryParse((e['mcqCount'] ?? 0).toString()) ?? 0;
                   final createdAt = (e['createdAt'] ?? '').toString();
                   return InkWell(
                     onTap: () {
@@ -93,9 +114,17 @@ class _TeacherExamResultsScreenState extends State<TeacherExamResultsScreen> {
                       padding: const EdgeInsets.all(16),
                       margin: const EdgeInsets.only(bottom: 12),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: context.appSurface,
                         borderRadius: BorderRadius.circular(16),
-                        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4))],
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(
+                              alpha: context.isDarkMode ? 0.18 : 0.03,
+                            ),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
                       ),
                       child: Row(
                         children: [
@@ -106,23 +135,51 @@ class _TeacherExamResultsScreenState extends State<TeacherExamResultsScreen> {
                               color: Colors.blue.withOpacity(0.1),
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            child: const Icon(LucideIcons.fileCheck, color: Colors.blue),
+                            child: const Icon(
+                              LucideIcons.fileCheck,
+                              color: Colors.blue,
+                            ),
                           ),
                           const SizedBox(width: 12),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.end,
                               children: [
-                                Text(subject.isEmpty ? 'اختبار' : subject, style: GoogleFonts.cairo(fontWeight: FontWeight.bold)),
+                                Text(
+                                  subject.isEmpty ? 'اختبار' : subject,
+                                  style: GoogleFonts.cairo(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                                 const SizedBox(height: 4),
-                                Text('$department • $level', style: GoogleFonts.cairo(color: Colors.grey[600], fontSize: 12)),
+                                Text(
+                                  '$department • $level',
+                                  style: GoogleFonts.cairo(
+                                    color: Colors.grey[600],
+                                    fontSize: 12,
+                                  ),
+                                ),
                                 const SizedBox(height: 4),
-                                Text('أسئلة: ${tf + mcq} (صح/خطأ: $tf • اختيار: $mcq)', style: GoogleFonts.cairo(color: Colors.grey[600], fontSize: 12)),
+                                Text(
+                                  'أسئلة: ${tf + mcq} (صح/خطأ: $tf • اختيار: $mcq)',
+                                  style: GoogleFonts.cairo(
+                                    color: Colors.grey[600],
+                                    fontSize: 12,
+                                  ),
+                                ),
                               ],
                             ),
                           ),
                           const SizedBox(width: 8),
-                          Text(createdAt.isNotEmpty ? createdAt.split('T').first : '', style: GoogleFonts.cairo(color: Colors.grey[600], fontSize: 12)),
+                          Text(
+                            createdAt.isNotEmpty
+                                ? createdAt.split('T').first
+                                : '',
+                            style: GoogleFonts.cairo(
+                              color: Colors.grey[600],
+                              fontSize: 12,
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -139,10 +196,17 @@ class ExamResultsDetailsScreen extends StatefulWidget {
   final String subject;
   final String department;
   final String level;
-  const ExamResultsDetailsScreen({super.key, required this.examId, required this.subject, required this.department, required this.level});
+  const ExamResultsDetailsScreen({
+    super.key,
+    required this.examId,
+    required this.subject,
+    required this.department,
+    required this.level,
+  });
 
   @override
-  State<ExamResultsDetailsScreen> createState() => _ExamResultsDetailsScreenState();
+  State<ExamResultsDetailsScreen> createState() =>
+      _ExamResultsDetailsScreenState();
 }
 
 class _ExamResultsDetailsScreenState extends State<ExamResultsDetailsScreen> {
@@ -157,7 +221,10 @@ class _ExamResultsDetailsScreenState extends State<ExamResultsDetailsScreen> {
 
   Future<void> _load() async {
     try {
-      final students = await ApiService.getStudents(department: widget.department, level: widget.level);
+      final students = await ApiService.getStudents(
+        department: widget.department,
+        level: widget.level,
+      );
       for (final s in students) {
         final code = (s['studentCode'] ?? s['code'] ?? '').toString();
         if (code.isEmpty) continue;
@@ -169,7 +236,8 @@ class _ExamResultsDetailsScreenState extends State<ExamResultsDetailsScreen> {
             _rows.add({
               'code': code,
               'name': (s['fullName'] ?? s['name'] ?? '').toString(),
-              'score': double.tryParse((latest['score'] ?? 0).toString()) ?? 0.0,
+              'score':
+                  double.tryParse((latest['score'] ?? 0).toString()) ?? 0.0,
               'correct': int.tryParse((latest['correct'] ?? 0).toString()) ?? 0,
               'wrong': int.tryParse((latest['wrong'] ?? 0).toString()) ?? 0,
               'total': int.tryParse((latest['total'] ?? 0).toString()) ?? 0,
@@ -189,11 +257,17 @@ class _ExamResultsDetailsScreenState extends State<ExamResultsDetailsScreen> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: const Color(0xFFF8F9FA),
+        backgroundColor: context.appBackground,
         appBar: AppBar(
-          backgroundColor: Colors.white,
+          backgroundColor: context.appSurface,
           elevation: 0,
-          title: Text('نتائج: ${widget.subject}', style: GoogleFonts.cairo(color: AppColors.text, fontWeight: FontWeight.bold)),
+          title: Text(
+            'نتائج: ${widget.subject}',
+            style: GoogleFonts.cairo(
+              color: context.appText,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
           leading: IconButton(
             icon: const Icon(LucideIcons.arrowRight, color: AppColors.primary),
             onPressed: () => Navigator.pop(context),
@@ -209,11 +283,24 @@ class _ExamResultsDetailsScreenState extends State<ExamResultsDetailsScreen> {
                     return Container(
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: context.appSurface,
                         borderRadius: BorderRadius.circular(16),
-                        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4))],
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(
+                              alpha: context.isDarkMode ? 0.18 : 0.03,
+                            ),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
                       ),
-                      child: Center(child: Text('لا توجد نتائج مسجلة لهذا الاختبار', style: GoogleFonts.cairo(color: AppColors.textLight))),
+                      child: Center(
+                        child: Text(
+                          'لا توجد نتائج مسجلة لهذا الاختبار',
+                          style: GoogleFonts.cairo(color: context.appTextLight),
+                        ),
+                      ),
                     );
                   }
                   final r = _rows[index];
@@ -221,9 +308,17 @@ class _ExamResultsDetailsScreenState extends State<ExamResultsDetailsScreen> {
                     padding: const EdgeInsets.all(16),
                     margin: const EdgeInsets.only(bottom: 12),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: context.appSurface,
                       borderRadius: BorderRadius.circular(16),
-                      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4))],
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(
+                            alpha: context.isDarkMode ? 0.18 : 0.03,
+                          ),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -238,7 +333,10 @@ class _ExamResultsDetailsScreenState extends State<ExamResultsDetailsScreen> {
                                 color: Colors.green.withOpacity(0.1),
                                 borderRadius: BorderRadius.circular(12),
                               ),
-                              child: const Icon(LucideIcons.user, color: Colors.green),
+                              child: const Icon(
+                                LucideIcons.user,
+                                color: Colors.green,
+                              ),
                             ),
                             const SizedBox(width: 12),
                             Expanded(
@@ -247,14 +345,19 @@ class _ExamResultsDetailsScreenState extends State<ExamResultsDetailsScreen> {
                                 children: [
                                   Text(
                                     (r['name'] ?? '').toString(),
-                                    style: GoogleFonts.cairo(fontWeight: FontWeight.bold),
+                                    style: GoogleFonts.cairo(
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
                                     (r['code'] ?? '').toString(),
-                                    style: GoogleFonts.cairo(color: Colors.grey[600], fontSize: 12),
+                                    style: GoogleFonts.cairo(
+                                      color: Colors.grey[600],
+                                      fontSize: 12,
+                                    ),
                                   ),
                                 ],
                               ),
@@ -265,7 +368,7 @@ class _ExamResultsDetailsScreenState extends State<ExamResultsDetailsScreen> {
                         Text(
                           'النتيجة: ${((r['score'] ?? 0.0) as double).toStringAsFixed(2)}%',
                           textAlign: TextAlign.right,
-                          style: GoogleFonts.cairo(color: AppColors.text),
+                          style: GoogleFonts.cairo(color: context.appText),
                         ),
                         const SizedBox(height: 8),
                         Wrap(
@@ -273,9 +376,21 @@ class _ExamResultsDetailsScreenState extends State<ExamResultsDetailsScreen> {
                           runSpacing: 8,
                           spacing: 8,
                           children: [
-                            _badge('صحيح', (r['correct'] ?? 0).toString(), Colors.green),
-                            _badge('خطأ', (r['wrong'] ?? 0).toString(), Colors.red),
-                            _badge('إجمالي', (r['total'] ?? 0).toString(), Colors.blue),
+                            _badge(
+                              'صحيح',
+                              (r['correct'] ?? 0).toString(),
+                              Colors.green,
+                            ),
+                            _badge(
+                              'خطأ',
+                              (r['wrong'] ?? 0).toString(),
+                              Colors.red,
+                            ),
+                            _badge(
+                              'إجمالي',
+                              (r['total'] ?? 0).toString(),
+                              Colors.blue,
+                            ),
                           ],
                         ),
                       ],
@@ -290,12 +405,22 @@ class _ExamResultsDetailsScreenState extends State<ExamResultsDetailsScreen> {
   Widget _badge(String title, String value, Color color) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(8),
+      ),
       child: Row(
         children: [
-          Container(width: 6, height: 6, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+          Container(
+            width: 6,
+            height: 6,
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+          ),
           const SizedBox(width: 6),
-          Text('$title: $value', style: GoogleFonts.cairo(color: color, fontSize: 12)),
+          Text(
+            '$title: $value',
+            style: GoogleFonts.cairo(color: color, fontSize: 12),
+          ),
         ],
       ),
     );

@@ -45,7 +45,9 @@ class _SplashScreenState extends State<SplashScreen> {
       }
     } catch (_) {}
     nav.pushReplacement(
-      MaterialPageRoute(builder: (context) => const LoginScreen(userType: 'student')),
+      MaterialPageRoute(
+        builder: (context) => const LoginScreen(userType: 'student'),
+      ),
     );
   }
 

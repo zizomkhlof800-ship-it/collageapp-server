@@ -64,7 +64,7 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
 
   void _importFromPDF() async {
     final messenger = ScaffoldMessenger.of(context);
-    
+
     try {
       final result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
@@ -78,7 +78,7 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
 
       final file = result.files.first;
       Uint8List? bytes = file.bytes;
-      
+
       // If bytes are null (common on some Android versions/configurations), try reading from path
       if (bytes == null && file.path != null) {
         try {
@@ -90,14 +90,14 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
           debugPrint('Error reading file from path: $e');
         }
       }
-      
+
       if (bytes == null) {
         throw Exception("لا يمكن قراءة الملف. يرجى المحاولة مرة أخرى.");
       }
 
       // 1. Load PDF
       final PdfDocument document = PdfDocument(inputBytes: bytes);
-      
+
       // 2. Extract Text
       String text = PdfTextExtractor(document).extractText();
       document.dispose();
@@ -108,9 +108,11 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
 
       // 3. Parse Questions
       final questions = _parseTextToQuestions(text);
-      
+
       if (questions.isEmpty) {
-        throw Exception("لم يتم العثور على أسئلة بالتنسيق المطلوب (أ، ب، ج، د) أو (صح، خطأ)");
+        throw Exception(
+          "لم يتم العثور على أسئلة بالتنسيق المطلوب (أ، ب، ج، د) أو (صح، خطأ)",
+        );
       }
 
       setState(() {
@@ -120,12 +122,14 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
 
       // Show review UI
       _showReviewDialog();
-
     } catch (e) {
       setState(() => _isParsing = false);
       messenger.showSnackBar(
         SnackBar(
-          content: Text(e.toString().replaceAll('Exception: ', ''), style: GoogleFonts.cairo()),
+          content: Text(
+            e.toString().replaceAll('Exception: ', ''),
+            style: GoogleFonts.cairo(),
+          ),
           backgroundColor: Colors.red,
         ),
       );
@@ -135,7 +139,7 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
   List<Map<String, dynamic>> _parseTextToQuestions(String text) {
     final List<Map<String, dynamic>> questions = [];
     final lines = text.split('\n');
-    
+
     Map<String, dynamic>? currentQuestion;
     List<String> currentOptions = [];
     int? correctAnswerIndex;
@@ -149,9 +153,15 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
       if (line.endsWith('?') || line.endsWith('؟')) {
         // Save previous question if exists
         if (currentQuestion != null) {
-          _finalizeQuestion(questions, currentQuestion, currentOptions, correctAnswerIndex, correctTFAnswer);
+          _finalizeQuestion(
+            questions,
+            currentQuestion,
+            currentOptions,
+            correctAnswerIndex,
+            correctTFAnswer,
+          );
         }
-        
+
         // Start new question
         currentQuestion = {
           'department': widget.department,
@@ -162,13 +172,20 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
         currentOptions = [];
         correctAnswerIndex = null;
         correctTFAnswer = null;
-      } 
+      }
       // Option detection: Starts with أ، ب، ج، د or A, B, C, D
       else if (RegExp(r'^([أبجدABCD]|[أ-د])[\.\-\)]\s*').hasMatch(line)) {
-        currentOptions.add(line.replaceFirst(RegExp(r'^([أبجدABCD]|[أ-د])[\.\-\)]\s*'), '').trim());
+        currentOptions.add(
+          line
+              .replaceFirst(RegExp(r'^([أبجدABCD]|[أ-د])[\.\-\)]\s*'), '')
+              .trim(),
+        );
       }
       // True/False detection: contains صح، خطأ or ✔️، ❌
-      else if (line.contains('صح') || line.contains('خطأ') || line.contains('✔️') || line.contains('❌')) {
+      else if (line.contains('صح') ||
+          line.contains('خطأ') ||
+          line.contains('✔️') ||
+          line.contains('❌')) {
         if (currentQuestion != null) {
           currentQuestion['type'] = 'tf';
           if (line.contains('صح') || line.contains('✔️')) {
@@ -177,21 +194,31 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
         }
       }
       // Correct answer detection: Starts with الإجابة: or الجواب:
-      if (line.startsWith('الإجابة:') || line.startsWith('الجواب:') || line.startsWith('Answer:')) {
+      if (line.startsWith('الإجابة:') ||
+          line.startsWith('الجواب:') ||
+          line.startsWith('Answer:')) {
         final answerPart = line.split(':').last.trim();
-        
+
         // Check if it's MCQ answer (أ، ب، ج، د or A, B, C, D)
         if (RegExp(r'^[أبجدABCD]').hasMatch(answerPart)) {
           final char = answerPart[0];
-          if (char == 'أ' || char == 'A') correctAnswerIndex = 0;
-          else if (char == 'ب' || char == 'B') correctAnswerIndex = 1;
-          else if (char == 'ج' || char == 'C') correctAnswerIndex = 2;
-          else if (char == 'د' || char == 'D') correctAnswerIndex = 3;
-        } 
+          if (char == 'أ' || char == 'A')
+            correctAnswerIndex = 0;
+          else if (char == 'ب' || char == 'B')
+            correctAnswerIndex = 1;
+          else if (char == 'ج' || char == 'C')
+            correctAnswerIndex = 2;
+          else if (char == 'د' || char == 'D')
+            correctAnswerIndex = 3;
+        }
         // Check if it's TF answer
-        else if (answerPart.contains('صح') || answerPart.contains('✔️') || answerPart.contains('True')) {
+        else if (answerPart.contains('صح') ||
+            answerPart.contains('✔️') ||
+            answerPart.contains('True')) {
           correctTFAnswer = true;
-        } else if (answerPart.contains('خطأ') || answerPart.contains('❌') || answerPart.contains('False')) {
+        } else if (answerPart.contains('خطأ') ||
+            answerPart.contains('❌') ||
+            answerPart.contains('False')) {
           correctTFAnswer = false;
         }
       }
@@ -199,13 +226,25 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
 
     // Finalize last question
     if (currentQuestion != null) {
-      _finalizeQuestion(questions, currentQuestion, currentOptions, correctAnswerIndex, correctTFAnswer);
+      _finalizeQuestion(
+        questions,
+        currentQuestion,
+        currentOptions,
+        correctAnswerIndex,
+        correctTFAnswer,
+      );
     }
 
     return questions;
   }
 
-  void _finalizeQuestion(List<Map<String, dynamic>> questions, Map<String, dynamic> q, List<String> options, int? mcqAns, bool? tfAns) {
+  void _finalizeQuestion(
+    List<Map<String, dynamic>> questions,
+    Map<String, dynamic> q,
+    List<String> options,
+    int? mcqAns,
+    bool? tfAns,
+  ) {
     if (options.isNotEmpty) {
       q['type'] = 'mcq';
       q['options'] = options;
@@ -229,7 +268,13 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
             children: [
               const Icon(LucideIcons.clipboardCheck, color: Colors.green),
               const SizedBox(width: 8),
-              Text('مراجعة الأسئلة المستخرجة', style: GoogleFonts.cairo(fontWeight: FontWeight.bold, fontSize: 16)),
+              Text(
+                'مراجعة الأسئلة المستخرجة',
+                style: GoogleFonts.cairo(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
             ],
           ),
           content: SizedBox(
@@ -241,15 +286,40 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
               itemBuilder: (context, index) {
                 final q = _parsedQuestions[index];
                 return ListTile(
-                  title: Text(q['question'], style: GoogleFonts.cairo(fontSize: 13, fontWeight: FontWeight.bold)),
+                  title: Text(
+                    q['question'],
+                    style: GoogleFonts.cairo(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                   subtitle: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(q['type'] == 'mcq' ? 'نوع: اختيار متعدد' : 'نوع: صح / خطأ', style: GoogleFonts.cairo(fontSize: 11, color: Colors.blue)),
+                      Text(
+                        q['type'] == 'mcq'
+                            ? 'نوع: اختيار متعدد'
+                            : 'نوع: صح / خطأ',
+                        style: GoogleFonts.cairo(
+                          fontSize: 11,
+                          color: Colors.blue,
+                        ),
+                      ),
                       if (q['type'] == 'mcq')
-                        ... (q['options'] as List).map((opt) => Text('• $opt', style: GoogleFonts.cairo(fontSize: 11))),
-                      Text('الإجابة: ${q['type'] == 'mcq' ? (q['options'] as List)[q['answer']] : (q['answer'] ? 'صح' : 'خطأ')}', 
-                        style: GoogleFonts.cairo(fontSize: 11, color: Colors.green, fontWeight: FontWeight.bold)),
+                        ...(q['options'] as List).map(
+                          (opt) => Text(
+                            '• $opt',
+                            style: GoogleFonts.cairo(fontSize: 11),
+                          ),
+                        ),
+                      Text(
+                        'الإجابة: ${q['type'] == 'mcq' ? (q['options'] as List)[q['answer']] : (q['answer'] ? 'صح' : 'خطأ')}',
+                        style: GoogleFonts.cairo(
+                          fontSize: 11,
+                          color: Colors.green,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ],
                   ),
                 );
@@ -261,8 +331,8 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
               onPressed: () {
                 setState(() => _parsedQuestions = []);
                 Navigator.pop(context);
-              }, 
-              child: Text('إلغاء', style: GoogleFonts.cairo(color: Colors.red))
+              },
+              child: Text('إلغاء', style: GoogleFonts.cairo(color: Colors.red)),
             ),
             ElevatedButton(
               onPressed: () async {
@@ -277,11 +347,22 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
                 });
                 _loadQuestions();
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('تم حفظ جميع الأسئلة بنجاح', style: GoogleFonts.cairo()), backgroundColor: Colors.green),
+                  SnackBar(
+                    content: Text(
+                      'تم حفظ جميع الأسئلة بنجاح',
+                      style: GoogleFonts.cairo(),
+                    ),
+                    backgroundColor: Colors.green,
+                  ),
                 );
               },
-              style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
-              child: Text('تأكيد وحفظ بنك الأسئلة', style: GoogleFonts.cairo(color: Colors.white)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+              ),
+              child: Text(
+                'تأكيد وحفظ بنك الأسئلة',
+                style: GoogleFonts.cairo(color: Colors.white),
+              ),
             ),
           ],
         ),
@@ -305,7 +386,7 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
@@ -316,12 +397,27 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
           title: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('بنك الأسئلة', style: GoogleFonts.cairo(fontWeight: FontWeight.bold, fontSize: 16)),
-              Text(widget.subject, style: GoogleFonts.cairo(fontSize: 12, color: theme.colorScheme.primary)),
+              Text(
+                'بنك الأسئلة',
+                style: GoogleFonts.cairo(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
+              Text(
+                widget.subject,
+                style: GoogleFonts.cairo(
+                  fontSize: 12,
+                  color: theme.colorScheme.primary,
+                ),
+              ),
             ],
           ),
           leading: IconButton(
-            icon: Icon(LucideIcons.arrowRight, color: theme.colorScheme.onSurface),
+            icon: Icon(
+              LucideIcons.arrowRight,
+              color: theme.colorScheme.onSurface,
+            ),
             onPressed: () => Navigator.pop(context),
           ),
           actions: [
@@ -340,21 +436,24 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
                     const CircularProgressIndicator(),
                     if (_isParsing) ...[
                       const SizedBox(height: 16),
-                      Text('جاري تحليل ملف الـ PDF واستخراج الأسئلة...', style: GoogleFonts.cairo(fontSize: 14)),
+                      Text(
+                        'جاري تحليل ملف الـ PDF واستخراج الأسئلة...',
+                        style: GoogleFonts.cairo(fontSize: 14),
+                      ),
                     ],
                   ],
                 ),
               )
             : _questions.isEmpty
-                ? _buildEmptyState()
-                : ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: _questions.length,
-                    itemBuilder: (context, index) {
-                      final q = _questions[index];
-                      return _buildQuestionCard(q, theme);
-                    },
-                  ),
+            ? _buildEmptyState()
+            : ListView.builder(
+                padding: const EdgeInsets.all(16),
+                itemCount: _questions.length,
+                itemBuilder: (context, index) {
+                  final q = _questions[index];
+                  return _buildQuestionCard(q, theme);
+                },
+              ),
         floatingActionButton: FloatingActionButton(
           onPressed: _addNewQuestion,
           backgroundColor: theme.colorScheme.primary,
@@ -371,9 +470,15 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
         children: [
           Icon(LucideIcons.database, size: 64, color: Colors.grey[300]),
           const SizedBox(height: 16),
-          Text('لا توجد أسئلة في البنك لهذه المادة', style: GoogleFonts.cairo(color: Colors.grey)),
+          Text(
+            'لا توجد أسئلة في البنك لهذه المادة',
+            style: GoogleFonts.cairo(color: Colors.grey),
+          ),
           const SizedBox(height: 8),
-          Text('يمكنك إضافة أسئلة يدوياً أو استيرادها من ملف PDF', style: GoogleFonts.cairo(fontSize: 12, color: Colors.grey)),
+          Text(
+            'يمكنك إضافة أسئلة يدوياً أو استيرادها من ملف PDF',
+            style: GoogleFonts.cairo(fontSize: 12, color: Colors.grey),
+          ),
         ],
       ),
     );
@@ -394,18 +499,29 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: theme.colorScheme.primary.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
                     isTF ? 'صح / خطأ' : 'اختيار متعدد',
-                    style: GoogleFonts.cairo(fontSize: 10, color: theme.colorScheme.primary, fontWeight: FontWeight.bold),
+                    style: GoogleFonts.cairo(
+                      fontSize: 10,
+                      color: theme.colorScheme.primary,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(LucideIcons.trash2, size: 18, color: Colors.red),
+                  icon: const Icon(
+                    LucideIcons.trash2,
+                    size: 18,
+                    color: Colors.red,
+                  ),
                   onPressed: () async {
                     await ApiService.deleteQuestionFromBank(q['id']);
                     _loadQuestions();
@@ -414,7 +530,13 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
               ],
             ),
             const SizedBox(height: 8),
-            Text(q['question'] ?? '', style: GoogleFonts.cairo(fontWeight: FontWeight.bold, fontSize: 14)),
+            Text(
+              q['question'] ?? '',
+              style: GoogleFonts.cairo(
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+              ),
+            ),
             const SizedBox(height: 12),
             if (isTF)
               Container(
@@ -422,32 +544,59 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
                 decoration: BoxDecoration(
                   color: Colors.green.withValues(alpha: 0.05),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.green.withValues(alpha: 0.2)),
+                  border: Border.all(
+                    color: Colors.green.withValues(alpha: 0.2),
+                  ),
                 ),
                 child: Row(
                   children: [
-                    const Icon(LucideIcons.checkCircle2, size: 16, color: Colors.green),
+                    const Icon(
+                      LucideIcons.checkCircle2,
+                      size: 16,
+                      color: Colors.green,
+                    ),
                     const SizedBox(width: 8),
-                    Text('الإجابة الصحيحة: ${q['answer'] == true ? 'صح' : 'خطأ'}', style: GoogleFonts.cairo(color: Colors.green, fontSize: 12, fontWeight: FontWeight.bold)),
+                    Text(
+                      'الإجابة الصحيحة: ${q['answer'] == true ? 'صح' : 'خطأ'}',
+                      style: GoogleFonts.cairo(
+                        color: Colors.green,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ],
                 ),
               )
-            else
-              ...[
-                ...(q['options'] as List).asMap().entries.map((e) {
-                  final isCorrect = e.key == q['answer'];
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 6),
-                    child: Row(
-                      children: [
-                        Icon(isCorrect ? LucideIcons.checkCircle2 : LucideIcons.circle, size: 14, color: isCorrect ? Colors.green : Colors.grey),
-                        const SizedBox(width: 8),
-                        Expanded(child: Text(e.value.toString(), style: GoogleFonts.cairo(fontSize: 13, color: isCorrect ? Colors.green : null, fontWeight: isCorrect ? FontWeight.bold : null))),
-                      ],
-                    ),
-                  );
-                }),
-              ],
+            else ...[
+              ...(q['options'] as List).asMap().entries.map((e) {
+                final isCorrect = e.key == q['answer'];
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: Row(
+                    children: [
+                      Icon(
+                        isCorrect
+                            ? LucideIcons.checkCircle2
+                            : LucideIcons.circle,
+                        size: 14,
+                        color: isCorrect ? Colors.green : Colors.grey,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          e.value.toString(),
+                          style: GoogleFonts.cairo(
+                            fontSize: 13,
+                            color: isCorrect ? Colors.green : null,
+                            fontWeight: isCorrect ? FontWeight.bold : null,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }),
+            ],
           ],
         ),
       ),
@@ -484,7 +633,10 @@ class _AddQuestionDialogState extends State<_AddQuestionDialog> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: AlertDialog(
-        title: Text('إضافة سؤال جديد', style: GoogleFonts.cairo(fontWeight: FontWeight.bold)),
+        title: Text(
+          'إضافة سؤال جديد',
+          style: GoogleFonts.cairo(fontWeight: FontWeight.bold),
+        ),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -492,8 +644,14 @@ class _AddQuestionDialogState extends State<_AddQuestionDialog> {
               DropdownButtonFormField<String>(
                 initialValue: _type,
                 items: [
-                  DropdownMenuItem(value: 'mcq', child: Text('اختيار متعدد', style: GoogleFonts.cairo())),
-                  DropdownMenuItem(value: 'tf', child: Text('صح / خطأ', style: GoogleFonts.cairo())),
+                  DropdownMenuItem(
+                    value: 'mcq',
+                    child: Text('اختيار متعدد', style: GoogleFonts.cairo()),
+                  ),
+                  DropdownMenuItem(
+                    value: 'tf',
+                    child: Text('صح / خطأ', style: GoogleFonts.cairo()),
+                  ),
                 ],
                 onChanged: (v) => setState(() => _type = v!),
                 decoration: const InputDecoration(labelText: 'نوع السؤال'),
@@ -506,12 +664,26 @@ class _AddQuestionDialogState extends State<_AddQuestionDialog> {
               ),
               const SizedBox(height: 12),
               if (_type == 'mcq') ...[
-                ...List.generate(4, (i) => Row(
-                  children: [
-                    Expanded(child: TextField(controller: _optionControllers[i], decoration: InputDecoration(labelText: 'اختيار ${i + 1}'))),
-                    Radio<int>(value: i, groupValue: _correctIdx, onChanged: (v) => setState(() => _correctIdx = v!)),
-                  ],
-                )),
+                ...List.generate(
+                  4,
+                  (i) => Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _optionControllers[i],
+                          decoration: InputDecoration(
+                            labelText: 'اختيار ${i + 1}',
+                          ),
+                        ),
+                      ),
+                      Radio<int>(
+                        value: i,
+                        groupValue: _correctIdx,
+                        onChanged: (v) => setState(() => _correctIdx = v!),
+                      ),
+                    ],
+                  ),
+                ),
               ] else ...[
                 Row(
                   children: [
@@ -538,7 +710,10 @@ class _AddQuestionDialogState extends State<_AddQuestionDialog> {
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: Text('إلغاء', style: GoogleFonts.cairo())),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('إلغاء', style: GoogleFonts.cairo()),
+          ),
           ElevatedButton(
             onPressed: () async {
               if (_questionController.text.isEmpty) return;
@@ -548,7 +723,9 @@ class _AddQuestionDialogState extends State<_AddQuestionDialog> {
                 'subject': widget.subject,
                 'type': _type,
                 'question': _questionController.text,
-                'options': _type == 'mcq' ? _optionControllers.map((c) => c.text).toList() : null,
+                'options': _type == 'mcq'
+                    ? _optionControllers.map((c) => c.text).toList()
+                    : null,
                 'answer': _type == 'mcq' ? _correctIdx : _tfCorrect,
               };
               await ApiService.addQuestionToBank(question);

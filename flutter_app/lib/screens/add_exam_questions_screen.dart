@@ -41,21 +41,32 @@ class _AddExamQuestionsScreenState extends State<AddExamQuestionsScreen> {
   late final List<bool> _tfCorrectIsTrue;
 
   late final List<TextEditingController> _mcqQuestionControllers;
-  late final List<List<TextEditingController>> _mcqOptionControllers; // 4 options each
+  late final List<List<TextEditingController>>
+  _mcqOptionControllers; // 4 options each
   late final List<int> _mcqCorrectIndex; // 0..3
 
   @override
   void initState() {
     super.initState();
-    _tfQuestionControllers = List.generate(widget.tfCount, (_) => TextEditingController());
+    _tfQuestionControllers = List.generate(
+      widget.tfCount,
+      (_) => TextEditingController(),
+    );
     _tfCorrectIsTrue = List.generate(widget.tfCount, (_) => true);
-    _mcqQuestionControllers = List.generate(widget.mcqCount, (_) => TextEditingController());
-    _mcqOptionControllers = List.generate(widget.mcqCount, (_) => List.generate(4, (_) => TextEditingController()));
+    _mcqQuestionControllers = List.generate(
+      widget.mcqCount,
+      (_) => TextEditingController(),
+    );
+    _mcqOptionControllers = List.generate(
+      widget.mcqCount,
+      (_) => List.generate(4, (_) => TextEditingController()),
+    );
     _mcqCorrectIndex = List.generate(widget.mcqCount, (_) => 0);
 
     if (widget.isFromBank) {
       _loadFromBank();
-    } else if (widget.initialQuestions != null && widget.initialQuestions!.isNotEmpty) {
+    } else if (widget.initialQuestions != null &&
+        widget.initialQuestions!.isNotEmpty) {
       _fillQuestions(widget.initialQuestions!);
     }
   }
@@ -74,14 +85,14 @@ class _AddExamQuestionsScreenState extends State<AddExamQuestionsScreen> {
         subject: widget.subject,
         type: 'mcq',
       );
-      
+
       // Shuffle and take required count
       tf.shuffle();
       mcq.shuffle();
-      
+
       final selectedTf = tf.take(widget.tfCount).toList();
       final selectedMcq = mcq.take(widget.mcqCount).toList();
-      
+
       if (mounted) {
         setState(() {
           _fillQuestions([...selectedTf, ...selectedMcq]);
@@ -97,16 +108,26 @@ class _AddExamQuestionsScreenState extends State<AddExamQuestionsScreen> {
       final type = (q['type'] ?? '').toString();
       if (type == 'tf' && tfI < _tfQuestionControllers.length) {
         _tfQuestionControllers[tfI].text = (q['question'] ?? '').toString();
-        final corr = (q['correct'] ?? 'true').toString().toLowerCase() == 'true' || q['answer'] == true;
+        final corr =
+            (q['correct'] ?? 'true').toString().toLowerCase() == 'true' ||
+            q['answer'] == true;
         _tfCorrectIsTrue[tfI] = corr;
         tfI++;
       } else if (type == 'mcq' && mcqI < _mcqQuestionControllers.length) {
         _mcqQuestionControllers[mcqI].text = (q['question'] ?? '').toString();
-        final options = (q['options'] as List?)?.map((e) => e.toString()).toList() ?? const [];
-        for (int k = 0; k < _mcqOptionControllers[mcqI].length && k < options.length; k++) {
+        final options =
+            (q['options'] as List?)?.map((e) => e.toString()).toList() ??
+            const [];
+        for (
+          int k = 0;
+          k < _mcqOptionControllers[mcqI].length && k < options.length;
+          k++
+        ) {
           _mcqOptionControllers[mcqI][k].text = options[k];
         }
-        final ci = int.tryParse((q['correctIndex'] ?? q['answer'] ?? 0).toString()) ?? 0;
+        final ci =
+            int.tryParse((q['correctIndex'] ?? q['answer'] ?? 0).toString()) ??
+            0;
         _mcqCorrectIndex[mcqI] = ci;
         mcqI++;
       }
@@ -131,22 +152,30 @@ class _AddExamQuestionsScreenState extends State<AddExamQuestionsScreen> {
 
   void _saveExam() async {
     // Collect data and save via DataService
-    final tfQuestions = List.generate(widget.tfCount, (i) => {
-      'type': 'tf',
-      'question': _tfQuestionControllers[i].text.trim(),
-      'correct': _tfCorrectIsTrue[i] ? 'true' : 'false',
-    }).where((q) => (q['question'] as String).isNotEmpty).toList();
-    final mcqQuestions = List.generate(widget.mcqCount, (i) => {
-      'type': 'mcq',
-      'question': _mcqQuestionControllers[i].text.trim(),
-      'options': _mcqOptionControllers[i].map((c) => c.text.trim()).toList(),
-      'correctIndex': _mcqCorrectIndex[i],
-    }).where((q) => (q['question'] as String).isNotEmpty).toList();
+    final tfQuestions = List.generate(
+      widget.tfCount,
+      (i) => {
+        'type': 'tf',
+        'question': _tfQuestionControllers[i].text.trim(),
+        'correct': _tfCorrectIsTrue[i] ? 'true' : 'false',
+      },
+    ).where((q) => (q['question'] as String).isNotEmpty).toList();
+    final mcqQuestions = List.generate(
+      widget.mcqCount,
+      (i) => {
+        'type': 'mcq',
+        'question': _mcqQuestionControllers[i].text.trim(),
+        'options': _mcqOptionControllers[i].map((c) => c.text.trim()).toList(),
+        'correctIndex': _mcqCorrectIndex[i],
+      },
+    ).where((q) => (q['question'] as String).isNotEmpty).toList();
 
     final messenger = ScaffoldMessenger.of(context);
     if (tfQuestions.isEmpty && mcqQuestions.isEmpty) {
       messenger.showSnackBar(
-        SnackBar(content: Text('أدخل أسئلة قبل الحفظ', style: GoogleFonts.cairo())),
+        SnackBar(
+          content: Text('أدخل أسئلة قبل الحفظ', style: GoogleFonts.cairo()),
+        ),
       );
       return;
     }
@@ -186,13 +215,21 @@ class _AddExamQuestionsScreenState extends State<AddExamQuestionsScreen> {
         );
       }
       messenger.showSnackBar(
-        SnackBar(content: Text('تم حفظ الاختبار', style: GoogleFonts.cairo()), backgroundColor: AppColors.cardGreenIcon),
+        SnackBar(
+          content: Text('تم حفظ الاختبار', style: GoogleFonts.cairo()),
+          backgroundColor: AppColors.cardGreenIcon,
+        ),
       );
       nav.pop();
       nav.pop();
     } catch (_) {
       messenger.showSnackBar(
-        SnackBar(content: Text('تعذر حفظ الاختبار على الخادم', style: GoogleFonts.cairo())),
+        SnackBar(
+          content: Text(
+            'تعذر حفظ الاختبار على الخادم',
+            style: GoogleFonts.cairo(),
+          ),
+        ),
       );
     }
   }
@@ -202,19 +239,31 @@ class _AddExamQuestionsScreenState extends State<AddExamQuestionsScreen> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: context.appBackground,
         appBar: AppBar(
-          backgroundColor: Colors.white,
+          backgroundColor: context.appSurface,
           elevation: 0,
-          title: Text('إنشاء أسئلة الاختبار', style: GoogleFonts.cairo(fontWeight: FontWeight.bold, color: AppColors.text)),
+          title: Text(
+            'إنشاء أسئلة الاختبار',
+            style: GoogleFonts.cairo(
+              fontWeight: FontWeight.bold,
+              color: context.appText,
+            ),
+          ),
           leading: IconButton(
-            icon: const Icon(LucideIcons.arrowRight, color: AppColors.text),
+            icon: Icon(LucideIcons.arrowRight, color: context.appText),
             onPressed: () => Navigator.pop(context),
           ),
           actions: [
             TextButton(
               onPressed: _saveExam,
-              child: Text('حفظ', style: GoogleFonts.cairo(color: AppColors.primary, fontWeight: FontWeight.bold)),
+              child: Text(
+                'حفظ',
+                style: GoogleFonts.cairo(
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
           ],
         ),
@@ -222,13 +271,25 @@ class _AddExamQuestionsScreenState extends State<AddExamQuestionsScreen> {
           padding: const EdgeInsets.all(16),
           children: [
             if (widget.tfCount > 0) ...[
-              Text('أسئلة صح/خطأ', style: GoogleFonts.cairo(fontWeight: FontWeight.bold, color: AppColors.text)),
+              Text(
+                'أسئلة صح/خطأ',
+                style: GoogleFonts.cairo(
+                  fontWeight: FontWeight.bold,
+                  color: context.appText,
+                ),
+              ),
               const SizedBox(height: 8),
               ...List.generate(widget.tfCount, (i) => _buildTFCard(i)),
               const SizedBox(height: 16),
             ],
             if (widget.mcqCount > 0) ...[
-              Text('أسئلة اختيار من متعدد', style: GoogleFonts.cairo(fontWeight: FontWeight.bold, color: AppColors.text)),
+              Text(
+                'أسئلة اختيار من متعدد',
+                style: GoogleFonts.cairo(
+                  fontWeight: FontWeight.bold,
+                  color: context.appText,
+                ),
+              ),
               const SizedBox(height: 8),
               ...List.generate(widget.mcqCount, (i) => _buildMCQCard(i)),
             ],
@@ -261,7 +322,8 @@ class _AddExamQuestionsScreenState extends State<AddExamQuestionsScreen> {
                   child: RadioListTile<bool>(
                     value: true,
                     groupValue: _tfCorrectIsTrue[index],
-                    onChanged: (v) => setState(() => _tfCorrectIsTrue[index] = v ?? true),
+                    onChanged: (v) =>
+                        setState(() => _tfCorrectIsTrue[index] = v ?? true),
                     title: Text('صح', style: GoogleFonts.cairo()),
                   ),
                 ),
@@ -269,7 +331,8 @@ class _AddExamQuestionsScreenState extends State<AddExamQuestionsScreen> {
                   child: RadioListTile<bool>(
                     value: false,
                     groupValue: _tfCorrectIsTrue[index],
-                    onChanged: (v) => setState(() => _tfCorrectIsTrue[index] = v ?? false),
+                    onChanged: (v) =>
+                        setState(() => _tfCorrectIsTrue[index] = v ?? false),
                     title: Text('خطأ', style: GoogleFonts.cairo()),
                   ),
                 ),
@@ -316,7 +379,8 @@ class _AddExamQuestionsScreenState extends State<AddExamQuestionsScreen> {
                     Radio<int>(
                       value: opt,
                       groupValue: _mcqCorrectIndex[index],
-                      onChanged: (v) => setState(() => _mcqCorrectIndex[index] = v ?? 0),
+                      onChanged: (v) =>
+                          setState(() => _mcqCorrectIndex[index] = v ?? 0),
                     ),
                     Text('صح', style: GoogleFonts.cairo()),
                   ],

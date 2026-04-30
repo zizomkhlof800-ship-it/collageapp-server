@@ -18,10 +18,11 @@ class ManageSchedulesScreen extends StatefulWidget {
 
 class _ManageSchedulesScreenState extends State<ManageSchedulesScreen> {
   final DataService _dataService = DataService();
-  
+
   // Controllers for adding new schedule
   final _subjectController = TextEditingController();
-  final _dayDateController = TextEditingController(); // Functions as Day for Academic, Date for Exam
+  final _dayDateController =
+      TextEditingController(); // Functions as Day for Academic, Date for Exam
   final _timeController = TextEditingController();
   final _locationController = TextEditingController();
   final _departmentController = TextEditingController(text: 'إعلام تربوي');
@@ -82,7 +83,12 @@ class _ManageSchedulesScreenState extends State<ManageSchedulesScreen> {
             children: [
               _buildTextField(_subjectController, 'المادة'),
               const SizedBox(height: 8),
-              _buildTextField(_dayDateController, widget.isExam ? 'التاريخ (YYYY-MM-DD)' : 'اليوم (السبت، الأحد...)'),
+              _buildTextField(
+                _dayDateController,
+                widget.isExam
+                    ? 'التاريخ (YYYY-MM-DD)'
+                    : 'اليوم (السبت، الأحد...)',
+              ),
               const SizedBox(height: 8),
               _buildTextField(_timeController, 'الوقت (من - إلى)'),
               const SizedBox(height: 8),
@@ -101,10 +107,9 @@ class _ManageSchedulesScreenState extends State<ManageSchedulesScreen> {
           ),
           ElevatedButton(
             onPressed: () {
-              if (_subjectController.text.isNotEmpty && 
+              if (_subjectController.text.isNotEmpty &&
                   _dayDateController.text.isNotEmpty &&
                   _timeController.text.isNotEmpty) {
-                
                 final newItem = ScheduleItem(
                   id: DateTime.now().millisecondsSinceEpoch.toString(),
                   subject: _subjectController.text,
@@ -122,11 +127,21 @@ class _ManageSchedulesScreenState extends State<ManageSchedulesScreen> {
                   _dataService.addSchedule(newItem);
                   Navigator.pop(context);
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('تمت الإضافة بنجاح', style: GoogleFonts.cairo())),
+                    SnackBar(
+                      content: Text(
+                        'تمت الإضافة بنجاح',
+                        style: GoogleFonts.cairo(),
+                      ),
+                    ),
                   );
                 } catch (_) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('فشل إضافة البند', style: GoogleFonts.cairo())),
+                    SnackBar(
+                      content: Text(
+                        'فشل إضافة البند',
+                        style: GoogleFonts.cairo(),
+                      ),
+                    ),
                   );
                 }
 
@@ -135,13 +150,13 @@ class _ManageSchedulesScreenState extends State<ManageSchedulesScreen> {
                 _dayDateController.clear();
                 _timeController.clear();
                 _locationController.clear();
-
-                
               }
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
             child: Text('إضافة', style: GoogleFonts.cairo(color: Colors.white)),
           ),
@@ -156,7 +171,9 @@ class _ManageSchedulesScreenState extends State<ManageSchedulesScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text(
-          widget.isExam ? 'إضافة صورة جدول الامتحانات' : 'إضافة صورة الجدول الدراسي',
+          widget.isExam
+              ? 'إضافة صورة جدول الامتحانات'
+              : 'إضافة صورة الجدول الدراسي',
           style: GoogleFonts.cairo(fontWeight: FontWeight.bold),
           textDirection: TextDirection.rtl,
         ),
@@ -181,7 +198,9 @@ class _ManageSchedulesScreenState extends State<ManageSchedulesScreen> {
                       final bytes = file.bytes;
                       if (bytes != null) {
                         final ext = (file.extension ?? 'png').toLowerCase();
-                        final mime = ext == 'jpg' || ext == 'jpeg' ? 'image/jpeg' : 'image/$ext';
+                        final mime = ext == 'jpg' || ext == 'jpeg'
+                            ? 'image/jpeg'
+                            : 'image/$ext';
                         final base64Data = base64Encode(bytes);
                         final dataUrl = 'data:$mime;base64,$base64Data';
                         _imageUrlController.text = dataUrl;
@@ -190,8 +209,13 @@ class _ManageSchedulesScreenState extends State<ManageSchedulesScreen> {
                     }
                   },
                   icon: const Icon(LucideIcons.image, size: 16),
-                  label: Text('اختيار صورة من الجهاز', style: GoogleFonts.cairo()),
-                  style: TextButton.styleFrom(foregroundColor: AppColors.primary),
+                  label: Text(
+                    'اختيار صورة من الجهاز',
+                    style: GoogleFonts.cairo(),
+                  ),
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppColors.primary,
+                  ),
                 ),
               ),
               if (_imageUrlController.text.isNotEmpty) ...[
@@ -229,20 +253,35 @@ class _ManageSchedulesScreenState extends State<ManageSchedulesScreen> {
                   _imageUrlController.clear();
                   Navigator.pop(context);
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('تمت إضافة الصورة بنجاح', style: GoogleFonts.cairo())),
+                    SnackBar(
+                      content: Text(
+                        'تمت إضافة الصورة بنجاح',
+                        style: GoogleFonts.cairo(),
+                      ),
+                    ),
                   );
                 } catch (_) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('فشل إضافة الصورة', style: GoogleFonts.cairo())),
+                    SnackBar(
+                      content: Text(
+                        'فشل إضافة الصورة',
+                        style: GoogleFonts.cairo(),
+                      ),
+                    ),
                   );
                 }
               }
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
-            child: Text('إضافة الصورة', style: GoogleFonts.cairo(color: Colors.white)),
+            child: Text(
+              'إضافة الصورة',
+              style: GoogleFonts.cairo(color: Colors.white),
+            ),
           ),
         ],
       ),
@@ -253,8 +292,16 @@ class _ManageSchedulesScreenState extends State<ManageSchedulesScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('تأكيد الحذف', style: GoogleFonts.cairo(fontWeight: FontWeight.bold), textDirection: TextDirection.rtl),
-        content: Text('هل أنت متأكد من حذف ${item.subject}؟', style: GoogleFonts.cairo(), textDirection: TextDirection.rtl),
+        title: Text(
+          'تأكيد الحذف',
+          style: GoogleFonts.cairo(fontWeight: FontWeight.bold),
+          textDirection: TextDirection.rtl,
+        ),
+        content: Text(
+          'هل أنت متأكد من حذف ${item.subject}؟',
+          style: GoogleFonts.cairo(),
+          textDirection: TextDirection.rtl,
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -262,7 +309,12 @@ class _ManageSchedulesScreenState extends State<ManageSchedulesScreen> {
           ),
           TextButton(
             onPressed: () {
-              _dataService.deleteSchedule(item.id, widget.isExam, item.department, item.level);
+              _dataService.deleteSchedule(
+                item.id,
+                widget.isExam,
+                item.department,
+                item.level,
+              );
               Navigator.pop(context);
             },
             child: Text('حذف', style: GoogleFonts.cairo(color: Colors.red)),
@@ -284,20 +336,29 @@ class _ManageSchedulesScreenState extends State<ManageSchedulesScreen> {
       ),
     );
   }
-  
-  Widget _buildDropdown(String label, List<String> items, TextEditingController controller) {
-    final currentValue = controller.text.isNotEmpty ? controller.text : (items.isNotEmpty ? items.first : '');
-    if (controller.text.isEmpty && items.isNotEmpty) controller.text = items.first;
+
+  Widget _buildDropdown(
+    String label,
+    List<String> items,
+    TextEditingController controller,
+  ) {
+    final currentValue = controller.text.isNotEmpty
+        ? controller.text
+        : (items.isNotEmpty ? items.first : '');
+    if (controller.text.isEmpty && items.isNotEmpty)
+      controller.text = items.first;
     return DropdownButtonFormField<String>(
       initialValue: currentValue,
       items: items
-          .map((e) => DropdownMenuItem<String>(
-                value: e,
-                child: Align(
-                  alignment: Alignment.centerRight,
-                  child: Text(e, style: GoogleFonts.cairo()),
-                ),
-              ))
+          .map(
+            (e) => DropdownMenuItem<String>(
+              value: e,
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: Text(e, style: GoogleFonts.cairo()),
+              ),
+            ),
+          )
           .toList(),
       onChanged: (v) {
         if (v != null) controller.text = v;
@@ -314,7 +375,9 @@ class _ManageSchedulesScreenState extends State<ManageSchedulesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final schedules = widget.isExam ? _dataService.examSchedules : _dataService.academicSchedules;
+    final schedules = widget.isExam
+        ? _dataService.examSchedules
+        : _dataService.academicSchedules;
 
     return Directionality(
       textDirection: TextDirection.rtl,
@@ -322,9 +385,12 @@ class _ManageSchedulesScreenState extends State<ManageSchedulesScreen> {
         appBar: AppBar(
           title: Text(
             widget.isExam ? 'إدارة جدول الامتحانات' : 'إدارة الجدول الدراسي',
-            style: GoogleFonts.cairo(fontWeight: FontWeight.bold, color: AppColors.text),
+            style: GoogleFonts.cairo(
+              fontWeight: FontWeight.bold,
+              color: context.appText,
+            ),
           ),
-          backgroundColor: Colors.white,
+          backgroundColor: context.appSurface,
           elevation: 0,
           leading: IconButton(
             icon: const Icon(LucideIcons.arrowRight, color: AppColors.primary),
@@ -338,14 +404,20 @@ class _ManageSchedulesScreenState extends State<ManageSchedulesScreen> {
               onPressed: _addSchedule,
               backgroundColor: AppColors.primary,
               icon: const Icon(LucideIcons.plus, color: Colors.white),
-              label: Text('إضافة بند', style: GoogleFonts.cairo(color: Colors.white)),
+              label: Text(
+                'إضافة بند',
+                style: GoogleFonts.cairo(color: Colors.white),
+              ),
             ),
             const SizedBox(height: 12),
             FloatingActionButton.extended(
               onPressed: _addScheduleImage,
               backgroundColor: Colors.orange,
               icon: const Icon(LucideIcons.image, color: Colors.white),
-              label: Text('إضافة صورة الجدول', style: GoogleFonts.cairo(color: Colors.white)),
+              label: Text(
+                'إضافة صورة الجدول',
+                style: GoogleFonts.cairo(color: Colors.white),
+              ),
             ),
           ],
         ),
@@ -354,11 +426,18 @@ class _ManageSchedulesScreenState extends State<ManageSchedulesScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(LucideIcons.calendarX, size: 64, color: Colors.grey[300]),
+                    Icon(
+                      LucideIcons.calendarX,
+                      size: 64,
+                      color: Colors.grey[300],
+                    ),
                     const SizedBox(height: 16),
                     Text(
                       'لا توجد بيانات مضافة حالياً',
-                      style: GoogleFonts.cairo(color: Colors.grey, fontSize: 16),
+                      style: GoogleFonts.cairo(
+                        color: Colors.grey,
+                        fontSize: 16,
+                      ),
                     ),
                   ],
                 ),
@@ -370,13 +449,19 @@ class _ManageSchedulesScreenState extends State<ManageSchedulesScreen> {
                   final item = schedules[index];
                   return Card(
                     margin: const EdgeInsets.only(bottom: 12),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                     elevation: 2,
                     child: ListTile(
                       leading: CircleAvatar(
-                        backgroundColor: widget.isExam ? Colors.orange.withOpacity(0.1) : Colors.blue.withOpacity(0.1),
+                        backgroundColor: widget.isExam
+                            ? Colors.orange.withOpacity(0.1)
+                            : Colors.blue.withOpacity(0.1),
                         child: Icon(
-                          widget.isExam ? LucideIcons.fileClock : LucideIcons.calendar,
+                          widget.isExam
+                              ? LucideIcons.fileClock
+                              : LucideIcons.calendar,
                           color: widget.isExam ? Colors.orange : Colors.blue,
                           size: 20,
                         ),
@@ -389,14 +474,22 @@ class _ManageSchedulesScreenState extends State<ManageSchedulesScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const SizedBox(height: 4),
-                          if ((widget.isExam ? item.date : item.day).isNotEmpty || item.time.isNotEmpty)
+                          if ((widget.isExam ? item.date : item.day)
+                                  .isNotEmpty ||
+                              item.time.isNotEmpty)
                             Row(
                               children: [
-                                Icon(LucideIcons.clock, size: 14, color: Colors.grey[600]),
+                                Icon(
+                                  LucideIcons.clock,
+                                  size: 14,
+                                  color: Colors.grey[600],
+                                ),
                                 const SizedBox(width: 4),
                                 Text(
                                   [
-                                    if ((widget.isExam ? item.date : item.day).isNotEmpty) (widget.isExam ? item.date : item.day),
+                                    if ((widget.isExam ? item.date : item.day)
+                                        .isNotEmpty)
+                                      (widget.isExam ? item.date : item.day),
                                     if (item.time.isNotEmpty) item.time,
                                   ].join(' | '),
                                   style: GoogleFonts.cairo(fontSize: 12),
@@ -407,13 +500,26 @@ class _ManageSchedulesScreenState extends State<ManageSchedulesScreen> {
                           if (item.location.isNotEmpty)
                             Row(
                               children: [
-                                Icon(LucideIcons.mapPin, size: 14, color: Colors.grey[600]),
+                                Icon(
+                                  LucideIcons.mapPin,
+                                  size: 14,
+                                  color: Colors.grey[600],
+                                ),
                                 const SizedBox(width: 4),
-                                Text(item.location, style: GoogleFonts.cairo(fontSize: 12)),
+                                Text(
+                                  item.location,
+                                  style: GoogleFonts.cairo(fontSize: 12),
+                                ),
                               ],
                             ),
                           const SizedBox(height: 4),
-                          Text('${item.department} | ${item.level}', style: GoogleFonts.cairo(fontSize: 12, color: Colors.grey[700])),
+                          Text(
+                            '${item.department} | ${item.level}',
+                            style: GoogleFonts.cairo(
+                              fontSize: 12,
+                              color: Colors.grey[700],
+                            ),
+                          ),
                           if (item.imageUrl.isNotEmpty) ...[
                             const SizedBox(height: 8),
                             ClipRRect(
@@ -422,9 +528,13 @@ class _ManageSchedulesScreenState extends State<ManageSchedulesScreen> {
                             ),
                           ],
                         ],
-                    ),
+                      ),
                       trailing: IconButton(
-                        icon: const Icon(LucideIcons.trash2, color: Colors.red, size: 20),
+                        icon: const Icon(
+                          LucideIcons.trash2,
+                          color: Colors.red,
+                          size: 20,
+                        ),
                         onPressed: () => _deleteSchedule(item),
                       ),
                       onTap: () {
@@ -449,14 +559,21 @@ class _ManageSchedulesScreenState extends State<ManageSchedulesScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('تعديل البند', style: GoogleFonts.cairo(fontWeight: FontWeight.bold), textDirection: TextDirection.rtl),
+        title: Text(
+          'تعديل البند',
+          style: GoogleFonts.cairo(fontWeight: FontWeight.bold),
+          textDirection: TextDirection.rtl,
+        ),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               _buildTextField(subject, 'المادة'),
               const SizedBox(height: 8),
-              _buildTextField(widget.isExam ? date : day, widget.isExam ? 'التاريخ (YYYY-MM-DD)' : 'اليوم'),
+              _buildTextField(
+                widget.isExam ? date : day,
+                widget.isExam ? 'التاريخ (YYYY-MM-DD)' : 'اليوم',
+              ),
               const SizedBox(height: 8),
               _buildTextField(time, 'الوقت (من - إلى)'),
               const SizedBox(height: 8),
@@ -469,7 +586,10 @@ class _ManageSchedulesScreenState extends State<ManageSchedulesScreen> {
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: Text('إلغاء', style: GoogleFonts.cairo(color: Colors.grey))),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('إلغاء', style: GoogleFonts.cairo(color: Colors.grey)),
+          ),
           ElevatedButton(
             onPressed: () async {
               final messenger = ScaffoldMessenger.of(context);
@@ -491,9 +611,18 @@ class _ManageSchedulesScreenState extends State<ManageSchedulesScreen> {
                   level.text,
                 );
                 nav.pop();
-                messenger.showSnackBar(SnackBar(content: Text('تم الحفظ', style: GoogleFonts.cairo())));
+                messenger.showSnackBar(
+                  SnackBar(
+                    content: Text('تم الحفظ', style: GoogleFonts.cairo()),
+                  ),
+                );
               } catch (_) {
-                messenger.showSnackBar(SnackBar(content: Text('تعذر الحفظ', style: GoogleFonts.cairo()), backgroundColor: Colors.red));
+                messenger.showSnackBar(
+                  SnackBar(
+                    content: Text('تعذر الحفظ', style: GoogleFonts.cairo()),
+                    backgroundColor: Colors.red,
+                  ),
+                );
               }
             },
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
@@ -520,7 +649,10 @@ class _ManageSchedulesScreenState extends State<ManageSchedulesScreen> {
           height: 140,
           alignment: Alignment.center,
           color: Colors.grey[200],
-          child: Text('تعذر قراءة الصورة', style: GoogleFonts.cairo(color: Colors.grey[600])),
+          child: Text(
+            'تعذر قراءة الصورة',
+            style: GoogleFonts.cairo(color: Colors.grey[600]),
+          ),
         );
       }
     } else {
@@ -534,7 +666,10 @@ class _ManageSchedulesScreenState extends State<ManageSchedulesScreen> {
           height: 140,
           alignment: Alignment.center,
           color: Colors.grey[200],
-          child: Text('تعذر تحميل الصورة', style: GoogleFonts.cairo(color: Colors.grey[600])),
+          child: Text(
+            'تعذر تحميل الصورة',
+            style: GoogleFonts.cairo(color: Colors.grey[600]),
+          ),
         ),
       );
     }

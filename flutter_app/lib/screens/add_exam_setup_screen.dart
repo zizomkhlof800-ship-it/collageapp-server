@@ -23,18 +23,29 @@ class AddExamSetupScreen extends StatefulWidget {
 }
 
 class _AddExamSetupScreenState extends State<AddExamSetupScreen> {
-  late final TextEditingController _tfCountController = TextEditingController(text: '0');
-  late final TextEditingController _mcqCountController = TextEditingController(text: '0');
-  late final TextEditingController _subjectController = TextEditingController(text: widget.initialSubject ?? '');
-  late final TextEditingController _departmentController = TextEditingController(text: widget.initialDepartment ?? 'إعلام تربوي');
-  late final TextEditingController _levelController = TextEditingController(text: widget.initialLevel ?? 'الفرقة الثانية');
-  late final TextEditingController _durationController = TextEditingController(text: '30');
+  late final TextEditingController _tfCountController = TextEditingController(
+    text: '0',
+  );
+  late final TextEditingController _mcqCountController = TextEditingController(
+    text: '0',
+  );
+  late final TextEditingController _subjectController = TextEditingController(
+    text: widget.initialSubject ?? '',
+  );
+  late final TextEditingController _departmentController =
+      TextEditingController(text: widget.initialDepartment ?? 'إعلام تربوي');
+  late final TextEditingController _levelController = TextEditingController(
+    text: widget.initialLevel ?? 'الفرقة الثانية',
+  );
+  late final TextEditingController _durationController = TextEditingController(
+    text: '30',
+  );
   DateTime? _startDate;
   TimeOfDay? _startTime;
   DateTime? _endDate;
   TimeOfDay? _endTime;
   bool _isFromBank = false;
-  
+
   final List<String> _departments = const [
     'تكنولوجيا التعليم',
     'الحاسب الآلي',
@@ -69,7 +80,9 @@ class _AddExamSetupScreenState extends State<AddExamSetupScreen> {
       lastDate: DateTime.now().add(const Duration(days: 365)),
       builder: (context, child) => Theme(
         data: Theme.of(context).copyWith(
-          colorScheme: Theme.of(context).colorScheme.copyWith(primary: AppColors.primary),
+          colorScheme: Theme.of(
+            context,
+          ).colorScheme.copyWith(primary: AppColors.primary),
         ),
         child: child!,
       ),
@@ -97,7 +110,9 @@ class _AddExamSetupScreenState extends State<AddExamSetupScreen> {
       lastDate: DateTime.now().add(const Duration(days: 365)),
       builder: (context, child) => Theme(
         data: Theme.of(context).copyWith(
-          colorScheme: Theme.of(context).colorScheme.copyWith(primary: AppColors.primary),
+          colorScheme: Theme.of(
+            context,
+          ).colorScheme.copyWith(primary: AppColors.primary),
         ),
         child: child!,
       ),
@@ -125,41 +140,73 @@ class _AddExamSetupScreenState extends State<AddExamSetupScreen> {
 
     if (tf <= 0 && mcq <= 0) {
       messenger.showSnackBar(
-        SnackBar(content: Text('اختر عدد الأسئلة لأي نوع على الأقل', style: GoogleFonts.cairo())),
+        SnackBar(
+          content: Text(
+            'اختر عدد الأسئلة لأي نوع على الأقل',
+            style: GoogleFonts.cairo(),
+          ),
+        ),
       );
       return;
     }
 
-    if (_startDate == null || _startTime == null || _endDate == null || _endTime == null) {
+    if (_startDate == null ||
+        _startTime == null ||
+        _endDate == null ||
+        _endTime == null) {
       messenger.showSnackBar(
-        SnackBar(content: Text('يرجى تحديد وقت البدء ووقت الانتهاء', style: GoogleFonts.cairo())),
+        SnackBar(
+          content: Text(
+            'يرجى تحديد وقت البدء ووقت الانتهاء',
+            style: GoogleFonts.cairo(),
+          ),
+        ),
       );
       return;
     }
 
-    final start = DateTime(_startDate!.year, _startDate!.month, _startDate!.day, _startTime!.hour, _startTime!.minute);
-    final end = DateTime(_endDate!.year, _endDate!.month, _endDate!.day, _endTime!.hour, _endTime!.minute);
+    final start = DateTime(
+      _startDate!.year,
+      _startDate!.month,
+      _startDate!.day,
+      _startTime!.hour,
+      _startTime!.minute,
+    );
+    final end = DateTime(
+      _endDate!.year,
+      _endDate!.month,
+      _endDate!.day,
+      _endTime!.hour,
+      _endTime!.minute,
+    );
 
     if (end.isBefore(start)) {
       messenger.showSnackBar(
-        SnackBar(content: Text('وقت الانتهاء يجب أن يكون بعد وقت البدء', style: GoogleFonts.cairo())),
+        SnackBar(
+          content: Text(
+            'وقت الانتهاء يجب أن يكون بعد وقت البدء',
+            style: GoogleFonts.cairo(),
+          ),
+        ),
       );
       return;
     }
 
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => AddExamQuestionsScreen(
-        tfCount: tf,
-        mcqCount: mcq,
-        subject: _subjectController.text.trim(),
-        department: _departmentController.text.trim(),
-        level: _levelController.text.trim(),
-        startTime: start.toIso8601String(),
-        endTime: end.toIso8601String(),
-        durationMinutes: duration,
-        isFromBank: _isFromBank,
-      )),
+      MaterialPageRoute(
+        builder: (context) => AddExamQuestionsScreen(
+          tfCount: tf,
+          mcqCount: mcq,
+          subject: _subjectController.text.trim(),
+          department: _departmentController.text.trim(),
+          level: _levelController.text.trim(),
+          startTime: start.toIso8601String(),
+          endTime: end.toIso8601String(),
+          durationMinutes: duration,
+          isFromBank: _isFromBank,
+        ),
+      ),
     );
   }
 
@@ -168,13 +215,19 @@ class _AddExamSetupScreenState extends State<AddExamSetupScreen> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: context.appBackground,
         appBar: AppBar(
-          backgroundColor: Colors.white,
+          backgroundColor: context.appSurface,
           elevation: 0,
-          title: Text('إعداد الاختبار', style: GoogleFonts.cairo(fontWeight: FontWeight.bold, color: AppColors.text)),
+          title: Text(
+            'إعداد الاختبار',
+            style: GoogleFonts.cairo(
+              fontWeight: FontWeight.bold,
+              color: context.appText,
+            ),
+          ),
           leading: IconButton(
-            icon: const Icon(LucideIcons.arrowRight, color: AppColors.text),
+            icon: Icon(LucideIcons.arrowRight, color: context.appText),
             onPressed: () => Navigator.pop(context),
           ),
         ),
@@ -185,11 +238,25 @@ class _AddExamSetupScreenState extends State<AddExamSetupScreen> {
             children: [
               _buildInfoCard(),
               const SizedBox(height: 16),
-              _buildTextField(_subjectController, 'اسم المادة', LucideIcons.book),
+              _buildTextField(
+                _subjectController,
+                'اسم المادة',
+                LucideIcons.book,
+              ),
               const SizedBox(height: 12),
-              _buildDropdown('القسم', LucideIcons.graduationCap, _departments, _departmentController),
+              _buildDropdown(
+                'القسم',
+                LucideIcons.graduationCap,
+                _departments,
+                _departmentController,
+              ),
               const SizedBox(height: 12),
-              _buildDropdown('الفرقة الدراسية', LucideIcons.layers, _levels, _levelController),
+              _buildDropdown(
+                'الفرقة الدراسية',
+                LucideIcons.layers,
+                _levels,
+                _levelController,
+              ),
               const SizedBox(height: 16),
               _buildSectionTitle('التوقيت والمدة'),
               const SizedBox(height: 8),
@@ -198,7 +265,9 @@ class _AddExamSetupScreenState extends State<AddExamSetupScreen> {
                   Expanded(
                     child: _buildDateTimePicker(
                       label: 'وقت البدء',
-                      value: _startDate == null ? 'اختر الوقت' : '${_startDate!.day}/${_startDate!.month} - ${_startTime!.format(context)}',
+                      value: _startDate == null
+                          ? 'اختر الوقت'
+                          : '${_startDate!.day}/${_startDate!.month} - ${_startTime!.format(context)}',
                       icon: LucideIcons.calendar,
                       onTap: _pickStartTime,
                     ),
@@ -207,7 +276,9 @@ class _AddExamSetupScreenState extends State<AddExamSetupScreen> {
                   Expanded(
                     child: _buildDateTimePicker(
                       label: 'وقت الانتهاء',
-                      value: _endDate == null ? 'اختر الوقت' : '${_endDate!.day}/${_endDate!.month} - ${_endTime!.format(context)}',
+                      value: _endDate == null
+                          ? 'اختر الوقت'
+                          : '${_endDate!.day}/${_endDate!.month} - ${_endTime!.format(context)}',
                       icon: LucideIcons.calendarCheck,
                       onTap: _pickEndTime,
                     ),
@@ -215,13 +286,25 @@ class _AddExamSetupScreenState extends State<AddExamSetupScreen> {
                 ],
               ),
               const SizedBox(height: 12),
-              _buildNumberField(_durationController, 'مدة الامتحان (بالدقائق)', LucideIcons.timer),
+              _buildNumberField(
+                _durationController,
+                'مدة الامتحان (بالدقائق)',
+                LucideIcons.timer,
+              ),
               const SizedBox(height: 16),
               _buildSectionTitle('الأسئلة وبنك الأسئلة'),
               const SizedBox(height: 8),
-              _buildNumberField(_tfCountController, 'عدد أسئلة صح/خطأ', LucideIcons.checkCircle),
+              _buildNumberField(
+                _tfCountController,
+                'عدد أسئلة صح/خطأ',
+                LucideIcons.checkCircle,
+              ),
               const SizedBox(height: 12),
-              _buildNumberField(_mcqCountController, 'عدد أسئلة اختيار من متعدد', LucideIcons.listChecks),
+              _buildNumberField(
+                _mcqCountController,
+                'عدد أسئلة اختيار من متعدد',
+                LucideIcons.listChecks,
+              ),
               const SizedBox(height: 16),
               _buildBankSwitch(),
               const SizedBox(height: 16),
@@ -234,9 +317,17 @@ class _AddExamSetupScreenState extends State<AddExamSetupScreen> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
                     padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
-                  child: Text('التالي', style: GoogleFonts.cairo(fontWeight: FontWeight.bold, color: Colors.white)),
+                  child: Text(
+                    'التالي',
+                    style: GoogleFonts.cairo(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -249,15 +340,31 @@ class _AddExamSetupScreenState extends State<AddExamSetupScreen> {
   Widget _buildSectionTitle(String title) {
     return Text(
       title,
-      style: GoogleFonts.cairo(fontWeight: FontWeight.bold, color: AppColors.primary, fontSize: 16),
+      style: GoogleFonts.cairo(
+        fontWeight: FontWeight.bold,
+        color: AppColors.primary,
+        fontSize: 16,
+      ),
     );
   }
 
-  Widget _buildDateTimePicker({required String label, required String value, required IconData icon, required VoidCallback onTap}) {
+  Widget _buildDateTimePicker({
+    required String label,
+    required String value,
+    required IconData icon,
+    required VoidCallback onTap,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: GoogleFonts.cairo(fontWeight: FontWeight.bold, color: AppColors.text, fontSize: 14)),
+        Text(
+          label,
+          style: GoogleFonts.cairo(
+            fontWeight: FontWeight.bold,
+            color: context.appText,
+            fontSize: 14,
+          ),
+        ),
         const SizedBox(height: 8),
         InkWell(
           onTap: onTap,
@@ -265,18 +372,23 @@ class _AddExamSetupScreenState extends State<AddExamSetupScreen> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: context.appSurface,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: AppColors.inputBorder),
             ),
             child: Row(
               children: [
-                Icon(icon, color: AppColors.textLight, size: 20),
+                Icon(icon, color: context.appTextLight, size: 20),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     value,
-                    style: GoogleFonts.cairo(color: _startDate == null ? AppColors.textLight : AppColors.text, fontSize: 13),
+                    style: GoogleFonts.cairo(
+                      color: _startDate == null
+                          ? context.appTextLight
+                          : context.appText,
+                      fontSize: 13,
+                    ),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
@@ -296,8 +408,14 @@ class _AddExamSetupScreenState extends State<AddExamSetupScreen> {
         borderRadius: BorderRadius.circular(12),
       ),
       child: SwitchListTile(
-        title: Text('سحب الأسئلة عشوائياً من البنك', style: GoogleFonts.cairo(fontWeight: FontWeight.bold, fontSize: 14)),
-        subtitle: Text('سيتم اختيار الأسئلة تلقائياً من الأسئلة المخزنة مسبقاً', style: GoogleFonts.cairo(fontSize: 12)),
+        title: Text(
+          'سحب الأسئلة عشوائياً من البنك',
+          style: GoogleFonts.cairo(fontWeight: FontWeight.bold, fontSize: 14),
+        ),
+        subtitle: Text(
+          'سيتم اختيار الأسئلة تلقائياً من الأسئلة المخزنة مسبقاً',
+          style: GoogleFonts.cairo(fontSize: 12),
+        ),
         value: _isFromBank,
         onChanged: (v) => setState(() => _isFromBank = v),
       ),
@@ -319,7 +437,10 @@ class _AddExamSetupScreenState extends State<AddExamSetupScreen> {
         );
       },
       icon: const Icon(LucideIcons.database),
-      label: Text('فتح بنك الأسئلة للمراجعة/الإضافة', style: GoogleFonts.cairo(fontWeight: FontWeight.bold)),
+      label: Text(
+        'فتح بنك الأسئلة للمراجعة/الإضافة',
+        style: GoogleFonts.cairo(fontWeight: FontWeight.bold),
+      ),
       style: OutlinedButton.styleFrom(
         foregroundColor: AppColors.primary,
         side: const BorderSide(color: AppColors.primary),
@@ -333,7 +454,7 @@ class _AddExamSetupScreenState extends State<AddExamSetupScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.appSurface,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
@@ -350,7 +471,10 @@ class _AddExamSetupScreenState extends State<AddExamSetupScreen> {
           Expanded(
             child: Text(
               'اختر أنواع الأسئلة وعددها، ثم انتقل لإدخال نصوص الأسئلة وتحديد الإجابات الصحيحة.',
-              style: GoogleFonts.cairo(fontSize: 12, color: AppColors.textLight),
+              style: GoogleFonts.cairo(
+                fontSize: 12,
+                color: context.appTextLight,
+              ),
             ),
           ),
         ],
@@ -358,82 +482,130 @@ class _AddExamSetupScreenState extends State<AddExamSetupScreen> {
     );
   }
 
-  Widget _buildTextField(TextEditingController controller, String label, IconData icon) {
+  Widget _buildTextField(
+    TextEditingController controller,
+    String label,
+    IconData icon,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: GoogleFonts.cairo(fontWeight: FontWeight.bold, color: AppColors.text)),
+        Text(
+          label,
+          style: GoogleFonts.cairo(
+            fontWeight: FontWeight.bold,
+            color: context.appText,
+          ),
+        ),
         const SizedBox(height: 8),
         TextField(
           controller: controller,
           decoration: InputDecoration(
-            prefixIcon: Icon(icon, color: AppColors.textLight, size: 20),
+            prefixIcon: Icon(icon, color: context.appTextLight, size: 20),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: const BorderSide(color: AppColors.inputBorder),
             ),
             filled: true,
-            fillColor: Colors.white,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            fillColor: context.appSurface,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 14,
+            ),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildNumberField(TextEditingController controller, String label, IconData icon) {
+  Widget _buildNumberField(
+    TextEditingController controller,
+    String label,
+    IconData icon,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: GoogleFonts.cairo(fontWeight: FontWeight.bold, color: AppColors.text)),
+        Text(
+          label,
+          style: GoogleFonts.cairo(
+            fontWeight: FontWeight.bold,
+            color: context.appText,
+          ),
+        ),
         const SizedBox(height: 8),
         TextField(
           controller: controller,
           keyboardType: TextInputType.number,
           decoration: InputDecoration(
-            prefixIcon: Icon(icon, color: AppColors.textLight, size: 20),
+            prefixIcon: Icon(icon, color: context.appTextLight, size: 20),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: const BorderSide(color: AppColors.inputBorder),
             ),
             filled: true,
-            fillColor: Colors.white,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            fillColor: context.appSurface,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 14,
+            ),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildDropdown(String label, IconData icon, List<String> items, TextEditingController controller) {
-    final currentValue = controller.text.isNotEmpty ? controller.text : (items.isNotEmpty ? items.first : '');
-    if (controller.text.isEmpty && items.isNotEmpty) controller.text = items.first;
+  Widget _buildDropdown(
+    String label,
+    IconData icon,
+    List<String> items,
+    TextEditingController controller,
+  ) {
+    final currentValue = controller.text.isNotEmpty
+        ? controller.text
+        : (items.isNotEmpty ? items.first : '');
+    if (controller.text.isEmpty && items.isNotEmpty)
+      controller.text = items.first;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: GoogleFonts.cairo(fontWeight: FontWeight.bold, color: AppColors.text)),
+        Text(
+          label,
+          style: GoogleFonts.cairo(
+            fontWeight: FontWeight.bold,
+            color: context.appText,
+          ),
+        ),
         const SizedBox(height: 8),
         DropdownButtonFormField<String>(
           initialValue: currentValue,
           items: items
-              .map((e) => DropdownMenuItem<String>(
-                    value: e,
-                    child: Align(alignment: Alignment.centerRight, child: Text(e, style: GoogleFonts.cairo())),
-                  ))
+              .map(
+                (e) => DropdownMenuItem<String>(
+                  value: e,
+                  child: Align(
+                    alignment: Alignment.centerRight,
+                    child: Text(e, style: GoogleFonts.cairo()),
+                  ),
+                ),
+              )
               .toList(),
           onChanged: (v) {
             if (v != null) controller.text = v;
             setState(() {});
           },
           decoration: InputDecoration(
-            prefixIcon: Icon(icon, color: AppColors.textLight, size: 20),
+            prefixIcon: Icon(icon, color: context.appTextLight, size: 20),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: const BorderSide(color: AppColors.inputBorder),
             ),
             filled: true,
-            fillColor: Colors.white,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            fillColor: context.appSurface,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 14,
+            ),
           ),
         ),
       ],

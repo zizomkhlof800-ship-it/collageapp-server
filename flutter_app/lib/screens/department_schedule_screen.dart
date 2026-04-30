@@ -19,7 +19,8 @@ class DepartmentScheduleScreen extends StatefulWidget {
   });
 
   @override
-  State<DepartmentScheduleScreen> createState() => _DepartmentScheduleScreenState();
+  State<DepartmentScheduleScreen> createState() =>
+      _DepartmentScheduleScreenState();
 }
 
 class _DepartmentScheduleScreenState extends State<DepartmentScheduleScreen> {
@@ -29,7 +30,10 @@ class _DepartmentScheduleScreenState extends State<DepartmentScheduleScreen> {
   void initState() {
     super.initState();
     _dataService.addListener(_onDataChanged);
-    _dataService.fetchSchedules(department: widget.department, level: widget.level);
+    _dataService.fetchSchedules(
+      department: widget.department,
+      level: widget.level,
+    );
   }
 
   @override
@@ -47,34 +51,51 @@ class _DepartmentScheduleScreenState extends State<DepartmentScheduleScreen> {
   @override
   Widget build(BuildContext context) {
     // Filter schedules for this student's department and level
-    final schedules = _dataService.academicSchedules.where((s) => 
-      s.department == widget.department && s.level == widget.level
-    ).toList();
-    final ScheduleItem? imageItem = schedules.firstWhere(
-      (s) => s.imageUrl.isNotEmpty,
-      orElse: () => ScheduleItem(subject: '', day: '', date: '', time: '', location: '', department: '', level: '', imageUrl: '', isExam: false, id: ''),
-    ).imageUrl.isNotEmpty
-      ? schedules.firstWhere((s) => s.imageUrl.isNotEmpty)
-      : null;
+    final schedules = _dataService.academicSchedules
+        .where(
+          (s) => s.department == widget.department && s.level == widget.level,
+        )
+        .toList();
+    final ScheduleItem? imageItem =
+        schedules
+            .firstWhere(
+              (s) => s.imageUrl.isNotEmpty,
+              orElse: () => ScheduleItem(
+                subject: '',
+                day: '',
+                date: '',
+                time: '',
+                location: '',
+                department: '',
+                level: '',
+                imageUrl: '',
+                isExam: false,
+                id: '',
+              ),
+            )
+            .imageUrl
+            .isNotEmpty
+        ? schedules.firstWhere((s) => s.imageUrl.isNotEmpty)
+        : null;
     final List<ScheduleItem> nonImageSchedules = imageItem == null
-      ? schedules
-      : schedules.where((s) => s != imageItem).toList();
+        ? schedules
+        : schedules.where((s) => s != imageItem).toList();
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: context.appBackground,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: context.appSurface,
         elevation: 0,
         centerTitle: true,
         title: Text(
           'القسم والجدول',
           style: GoogleFonts.cairo(
-            color: AppColors.text,
+            color: context.appText,
             fontWeight: FontWeight.bold,
           ),
         ),
         leading: IconButton(
-          icon: const Icon(LucideIcons.arrowRight, color: AppColors.text),
+          icon: Icon(LucideIcons.arrowRight, color: context.appText),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -86,14 +107,14 @@ class _DepartmentScheduleScreenState extends State<DepartmentScheduleScreen> {
             // Department Info Card
             _buildDepartmentInfoCard(),
             const SizedBox(height: 24),
-            
+
             // Schedule Section
             Text(
               'جدول المحاضرات',
               style: GoogleFonts.cairo(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: AppColors.text,
+                color: context.appText,
               ),
               textAlign: TextAlign.right,
             ),
@@ -102,7 +123,7 @@ class _DepartmentScheduleScreenState extends State<DepartmentScheduleScreen> {
               _buildScheduleImageSection(imageItem),
               const SizedBox(height: 16),
             ],
-            
+
             if (nonImageSchedules.isEmpty)
               _buildSchedulePlaceholder()
             else
@@ -115,7 +136,9 @@ class _DepartmentScheduleScreenState extends State<DepartmentScheduleScreen> {
 
   Uint8List? _decodeDataUrl(String url) {
     try {
-      final part = url.contains('base64,') ? url.split('base64,').last : url.split(',').last;
+      final part = url.contains('base64,')
+          ? url.split('base64,').last
+          : url.split(',').last;
       var b64 = part.trim().replaceAll(RegExp(r'\s+'), '');
       final mod = b64.length % 4;
       if (mod != 0) b64 = b64 + '=' * (4 - mod);
@@ -125,16 +148,19 @@ class _DepartmentScheduleScreenState extends State<DepartmentScheduleScreen> {
     }
   }
 
+  double get _surfaceShadowAlpha =>
+      Theme.of(context).brightness == Brightness.dark ? 0.18 : 0.03;
+
   Widget _buildScheduleItem(ScheduleItem item) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.appSurface,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withValues(alpha: _surfaceShadowAlpha),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -154,15 +180,18 @@ class _DepartmentScheduleScreenState extends State<DepartmentScheduleScreen> {
                   style: GoogleFonts.cairo(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.text,
+                    color: context.appText,
                   ),
                 ),
               ),
               const SizedBox(width: 8),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.1),
+                  color: AppColors.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
@@ -184,10 +213,10 @@ class _DepartmentScheduleScreenState extends State<DepartmentScheduleScreen> {
             children: [
               Text(
                 item.time,
-                style: GoogleFonts.cairo(color: AppColors.text, fontSize: 14),
+                style: GoogleFonts.cairo(color: context.appText, fontSize: 14),
               ),
               const SizedBox(width: 8),
-              const Icon(LucideIcons.clock, size: 16, color: AppColors.textLight),
+              Icon(LucideIcons.clock, size: 16, color: context.appTextLight),
             ],
           ),
           const SizedBox(height: 8),
@@ -196,10 +225,10 @@ class _DepartmentScheduleScreenState extends State<DepartmentScheduleScreen> {
             children: [
               Text(
                 item.location,
-                style: GoogleFonts.cairo(color: AppColors.text, fontSize: 14),
+                style: GoogleFonts.cairo(color: context.appText, fontSize: 14),
               ),
               const SizedBox(width: 8),
-              const Icon(LucideIcons.mapPin, size: 16, color: AppColors.textLight),
+              Icon(LucideIcons.mapPin, size: 16, color: context.appTextLight),
             ],
           ),
         ],
@@ -211,11 +240,11 @@ class _DepartmentScheduleScreenState extends State<DepartmentScheduleScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.appSurface,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withValues(alpha: _surfaceShadowAlpha),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -229,7 +258,7 @@ class _DepartmentScheduleScreenState extends State<DepartmentScheduleScreen> {
             style: GoogleFonts.cairo(
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: AppColors.text,
+              color: context.appText,
             ),
           ),
           const SizedBox(height: 12),
@@ -239,9 +268,13 @@ class _DepartmentScheduleScreenState extends State<DepartmentScheduleScreen> {
               onTap: () {
                 final img = item.imageUrl;
                 if (img.isEmpty) return;
-                Navigator.push(context, MaterialPageRoute(
-                  builder: (context) => ImageViewerScreen(imageUrl: img, title: 'صورة الجدول'),
-                ));
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        ImageViewerScreen(imageUrl: img, title: 'صورة الجدول'),
+                  ),
+                );
               },
               child: _buildImageWidgetContain(item.imageUrl),
             ),
@@ -255,11 +288,11 @@ class _DepartmentScheduleScreenState extends State<DepartmentScheduleScreen> {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.appSurface,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withValues(alpha: _surfaceShadowAlpha),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -279,14 +312,14 @@ class _DepartmentScheduleScreenState extends State<DepartmentScheduleScreen> {
                     style: GoogleFonts.cairo(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.text,
+                      color: context.appText,
                     ),
                   ),
                   Text(
                     'بياناتك الأكاديمية المسجلة',
                     style: GoogleFonts.cairo(
                       fontSize: 12,
-                      color: AppColors.textLight,
+                      color: context.appTextLight,
                     ),
                   ),
                 ],
@@ -295,10 +328,14 @@ class _DepartmentScheduleScreenState extends State<DepartmentScheduleScreen> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.1),
+                  color: AppColors.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(LucideIcons.graduationCap, color: AppColors.primary, size: 24),
+                child: const Icon(
+                  LucideIcons.graduationCap,
+                  color: AppColors.primary,
+                  size: 24,
+                ),
               ),
             ],
           ),
@@ -331,8 +368,11 @@ class _DepartmentScheduleScreenState extends State<DepartmentScheduleScreen> {
       return Container(
         height: 180,
         alignment: Alignment.center,
-        color: Colors.grey[200],
-        child: Text('تعذر قراءة الصورة', style: GoogleFonts.cairo(color: Colors.grey[600])),
+        color: context.appSurfaceVariant,
+        child: Text(
+          'تعذر قراءة الصورة',
+          style: GoogleFonts.cairo(color: context.appTextLight),
+        ),
       );
     }
     final u = url.startsWith('http') ? url : '$baseUrl$url';
@@ -344,8 +384,11 @@ class _DepartmentScheduleScreenState extends State<DepartmentScheduleScreen> {
       errorBuilder: (context, error, stackTrace) => Container(
         height: 180,
         alignment: Alignment.center,
-        color: Colors.grey[200],
-        child: Text('تعذر تحميل الصورة', style: GoogleFonts.cairo(color: Colors.grey[600])),
+        color: context.appSurfaceVariant,
+        child: Text(
+          'تعذر تحميل الصورة',
+          style: GoogleFonts.cairo(color: context.appTextLight),
+        ),
       ),
     );
   }
@@ -364,8 +407,11 @@ class _DepartmentScheduleScreenState extends State<DepartmentScheduleScreen> {
       return Container(
         height: 280,
         alignment: Alignment.center,
-        color: Colors.grey[200],
-        child: Text('تعذر قراءة الصورة', style: GoogleFonts.cairo(color: Colors.grey[600])),
+        color: context.appSurfaceVariant,
+        child: Text(
+          'تعذر قراءة الصورة',
+          style: GoogleFonts.cairo(color: context.appTextLight),
+        ),
       );
     }
     final u = url.startsWith('http') ? url : '$baseUrl$url';
@@ -377,8 +423,11 @@ class _DepartmentScheduleScreenState extends State<DepartmentScheduleScreen> {
       errorBuilder: (context, error, stackTrace) => Container(
         height: 280,
         alignment: Alignment.center,
-        color: Colors.grey[200],
-        child: Text('تعذر تحميل الصورة', style: GoogleFonts.cairo(color: Colors.grey[600])),
+        color: context.appSurfaceVariant,
+        child: Text(
+          'تعذر تحميل الصورة',
+          style: GoogleFonts.cairo(color: context.appTextLight),
+        ),
       ),
     );
   }
@@ -390,17 +439,14 @@ class _DepartmentScheduleScreenState extends State<DepartmentScheduleScreen> {
         Text(
           value,
           style: GoogleFonts.cairo(
-            color: AppColors.text,
+            color: context.appText,
             fontWeight: FontWeight.bold,
             fontSize: 14,
           ),
         ),
         Text(
           label,
-          style: GoogleFonts.cairo(
-            color: AppColors.textLight,
-            fontSize: 14,
-          ),
+          style: GoogleFonts.cairo(color: context.appTextLight, fontSize: 14),
         ),
       ],
     );
@@ -410,12 +456,12 @@ class _DepartmentScheduleScreenState extends State<DepartmentScheduleScreen> {
     return Container(
       padding: const EdgeInsets.all(32),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.appSurface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey[200]!),
+        border: Border.all(color: context.appBorder),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withValues(alpha: _surfaceShadowAlpha),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -427,10 +473,14 @@ class _DepartmentScheduleScreenState extends State<DepartmentScheduleScreen> {
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-            color: Colors.amber.withOpacity(0.1),
+              color: Colors.amber.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
-            child: const Icon(LucideIcons.calendarClock, size: 48, color: Colors.amber),
+            child: const Icon(
+              LucideIcons.calendarClock,
+              size: 48,
+              color: Colors.amber,
+            ),
           ),
           const SizedBox(height: 24),
           Text(
@@ -438,7 +488,7 @@ class _DepartmentScheduleScreenState extends State<DepartmentScheduleScreen> {
             style: GoogleFonts.cairo(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: AppColors.text,
+              color: context.appText,
             ),
           ),
           const SizedBox(height: 12),
@@ -447,7 +497,7 @@ class _DepartmentScheduleScreenState extends State<DepartmentScheduleScreen> {
             textAlign: TextAlign.center,
             style: GoogleFonts.cairo(
               fontSize: 14,
-              color: AppColors.textLight,
+              color: context.appTextLight,
               height: 1.6,
             ),
           ),

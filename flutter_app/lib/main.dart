@@ -43,6 +43,8 @@ class MyApp extends StatelessWidget {
               primary: const Color(0xFF0F3C66),
               secondary: const Color(0xFF1D4ED8),
               surface: Colors.white,
+              surfaceContainerHighest: const Color(0xFFF1F5F9),
+              onSurfaceVariant: const Color(0xFF64748B),
               brightness: Brightness.light,
             ),
             scaffoldBackgroundColor: const Color(0xFFF8FAFC),
@@ -65,6 +67,42 @@ class MyApp extends StatelessWidget {
                 borderRadius: BorderRadius.circular(16),
               ),
             ),
+            inputDecorationTheme: InputDecorationTheme(
+              filled: true,
+              fillColor: Colors.white,
+              labelStyle: GoogleFonts.cairo(color: const Color(0xFF64748B)),
+              hintStyle: GoogleFonts.cairo(color: const Color(0xFF94A3B8)),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: Color(0xFF0F3C66)),
+              ),
+            ),
+            dialogTheme: DialogThemeData(
+              backgroundColor: Colors.white,
+              titleTextStyle: GoogleFonts.cairo(
+                color: const Color(0xFF1D1D1D),
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+              contentTextStyle: GoogleFonts.cairo(
+                color: const Color(0xFF1F2937),
+              ),
+            ),
+            bottomSheetTheme: const BottomSheetThemeData(
+              backgroundColor: Colors.white,
+              modalBackgroundColor: Colors.white,
+            ),
+            dropdownMenuTheme: DropdownMenuThemeData(
+              textStyle: GoogleFonts.cairo(color: const Color(0xFF1F2937)),
+            ),
             dividerTheme: const DividerThemeData(color: Color(0xFFE2E8F0)),
           ),
           darkTheme: ThemeData(
@@ -74,7 +112,9 @@ class MyApp extends StatelessWidget {
               primary: const Color(0xFF3B82F6),
               secondary: const Color(0xFF60A5FA),
               surface: const Color(0xFF1E293B),
+              surfaceContainerHighest: const Color(0xFF334155),
               onSurface: Colors.white,
+              onSurfaceVariant: const Color(0xFFCBD5E1),
               brightness: Brightness.dark,
             ),
             scaffoldBackgroundColor: const Color(0xFF0F172A),
@@ -98,6 +138,42 @@ class MyApp extends StatelessWidget {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
               ),
+            ),
+            inputDecorationTheme: InputDecorationTheme(
+              filled: true,
+              fillColor: const Color(0xFF1E293B),
+              labelStyle: GoogleFonts.cairo(color: const Color(0xFFCBD5E1)),
+              hintStyle: GoogleFonts.cairo(color: const Color(0xFF94A3B8)),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: Color(0xFF334155)),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: Color(0xFF334155)),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: Color(0xFF60A5FA)),
+              ),
+            ),
+            dialogTheme: DialogThemeData(
+              backgroundColor: const Color(0xFF1E293B),
+              titleTextStyle: GoogleFonts.cairo(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+              contentTextStyle: GoogleFonts.cairo(
+                color: const Color(0xFFCBD5E1),
+              ),
+            ),
+            bottomSheetTheme: const BottomSheetThemeData(
+              backgroundColor: Color(0xFF1E293B),
+              modalBackgroundColor: Color(0xFF1E293B),
+            ),
+            dropdownMenuTheme: DropdownMenuThemeData(
+              textStyle: GoogleFonts.cairo(color: Colors.white),
             ),
             dividerTheme: const DividerThemeData(color: Color(0xFF334155)),
           ),

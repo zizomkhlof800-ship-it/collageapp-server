@@ -10,11 +10,7 @@ class StudentsListScreen extends StatefulWidget {
   final String? department;
   final String? level;
 
-  const StudentsListScreen({
-    super.key,
-    this.department,
-    this.level,
-  });
+  const StudentsListScreen({super.key, this.department, this.level});
 
   @override
   State<StudentsListScreen> createState() => _StudentsListScreenState();
@@ -22,10 +18,12 @@ class StudentsListScreen extends StatefulWidget {
 
 class _StudentsListScreenState extends State<StudentsListScreen> {
   Timer? _timer;
-  final TextEditingController _lectureIdController = TextEditingController(text: 'LECTURE-123');
+  final TextEditingController _lectureIdController = TextEditingController(
+    text: 'LECTURE-123',
+  );
   List<Map<String, dynamic>> _attended = [];
   final Set<String> _hiddenCodes = {};
-  
+
   String _codeOf(Map<String, dynamic> s) {
     return (s['studentCode'] ?? s['code'] ?? '').toString();
   }
@@ -48,7 +46,9 @@ class _StudentsListScreenState extends State<StudentsListScreen> {
 
   Future<void> _fetchAttendees() async {
     try {
-      final lectureId = AttendanceService.instance.currentLectureId ?? _lectureIdController.text.trim();
+      final lectureId =
+          AttendanceService.instance.currentLectureId ??
+          _lectureIdController.text.trim();
       if (lectureId.isEmpty) {
         setState(() => _attended = []);
         return;
@@ -58,7 +58,7 @@ class _StudentsListScreenState extends State<StudentsListScreen> {
         _attended = rows.where((s) {
           final map = Map<String, dynamic>.from(s);
           if (_hiddenCodes.contains(_codeOf(map))) return false;
-          
+
           // Filter by department and level if provided
           if (widget.department != null && widget.department!.isNotEmpty) {
             if (map['department'] != widget.department) return false;
@@ -75,7 +75,9 @@ class _StudentsListScreenState extends State<StudentsListScreen> {
   }
 
   Future<void> _deleteStudent(Map<String, dynamic> student) async {
-    final lectureId = AttendanceService.instance.currentLectureId ?? _lectureIdController.text.trim();
+    final lectureId =
+        AttendanceService.instance.currentLectureId ??
+        _lectureIdController.text.trim();
     final code = _codeOf(student);
     if (lectureId.isEmpty || code.isEmpty) return;
     final messenger = ScaffoldMessenger.of(context);
@@ -84,18 +86,24 @@ class _StudentsListScreenState extends State<StudentsListScreen> {
       if (mounted) {
         setState(() {
           _hiddenCodes.add(code);
-          _attended.removeWhere((s) => _codeOf(Map<String, dynamic>.from(s)) == code);
+          _attended.removeWhere(
+            (s) => _codeOf(Map<String, dynamic>.from(s)) == code,
+          );
         });
       }
       messenger.showSnackBar(
-        SnackBar(content: Text('تم حذف الطالب من السجل', style: GoogleFonts.cairo())),
+        SnackBar(
+          content: Text('تم حذف الطالب من السجل', style: GoogleFonts.cairo()),
+        ),
       );
     } catch (_) {
       // Remove locally even if server fails to avoid stuck UI
       if (mounted) {
         setState(() {
           _hiddenCodes.add(code);
-          _attended.removeWhere((s) => _codeOf(Map<String, dynamic>.from(s)) == code);
+          _attended.removeWhere(
+            (s) => _codeOf(Map<String, dynamic>.from(s)) == code,
+          );
         });
       }
     }
@@ -105,12 +113,18 @@ class _StudentsListScreenState extends State<StudentsListScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('بدء محاضرة جديدة', style: GoogleFonts.cairo(fontWeight: FontWeight.bold)),
+        title: Text(
+          'بدء محاضرة جديدة',
+          style: GoogleFonts.cairo(fontWeight: FontWeight.bold),
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text('هل أنت متأكد من مسح سجل الحضور الحالي لبدء محاضرة جديدة؟', style: GoogleFonts.cairo()),
+            Text(
+              'هل أنت متأكد من مسح سجل الحضور الحالي لبدء محاضرة جديدة؟',
+              style: GoogleFonts.cairo(),
+            ),
             const SizedBox(height: 12),
             TextField(
               controller: _lectureIdController,
@@ -133,11 +147,16 @@ class _StudentsListScreenState extends State<StudentsListScreen> {
               final lectureId = _lectureIdController.text.trim();
               Navigator.pop(context);
               if (lectureId.isNotEmpty) {
-                ApiService.clearAttendanceByLecture(lectureId).catchError((_) {});
+                ApiService.clearAttendanceByLecture(
+                  lectureId,
+                ).catchError((_) {});
               }
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text('تم تجهيز محاضرة جديدة، افتح شاشة QR لبدء الجلسة', style: GoogleFonts.cairo()),
+                  content: Text(
+                    'تم تجهيز محاضرة جديدة، افتح شاشة QR لبدء الجلسة',
+                    style: GoogleFonts.cairo(),
+                  ),
                   backgroundColor: AppColors.primary,
                 ),
               );
@@ -146,7 +165,13 @@ class _StudentsListScreenState extends State<StudentsListScreen> {
                 _attended = [];
               });
             },
-            child: Text('نعم، مسح', style: GoogleFonts.cairo(color: Colors.red, fontWeight: FontWeight.bold)),
+            child: Text(
+              'نعم، مسح',
+              style: GoogleFonts.cairo(
+                color: Colors.red,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
         ],
       ),
@@ -156,11 +181,12 @@ class _StudentsListScreenState extends State<StudentsListScreen> {
   @override
   Widget build(BuildContext context) {
     final attendedStudents = _attended;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.appBackground,
       appBar: AppBar(
-        backgroundColor: AppColors.white,
+        backgroundColor: context.appSurface,
         elevation: 0,
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -168,7 +194,7 @@ class _StudentsListScreenState extends State<StudentsListScreen> {
             Text(
               'سجل الحضور الذكي',
               style: GoogleFonts.cairo(
-                color: AppColors.text,
+                color: context.appText,
                 fontWeight: FontWeight.bold,
                 fontSize: 18,
               ),
@@ -176,14 +202,14 @@ class _StudentsListScreenState extends State<StudentsListScreen> {
             Text(
               '${attendedStudents.length} طالب حاضر',
               style: GoogleFonts.cairo(
-                color: AppColors.textLight,
+                color: context.appTextLight,
                 fontSize: 12,
               ),
             ),
           ],
         ),
         leading: IconButton(
-          icon: const Icon(LucideIcons.arrowRight, color: AppColors.text),
+          icon: Icon(LucideIcons.arrowRight, color: context.appText),
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
@@ -192,12 +218,21 @@ class _StudentsListScreenState extends State<StudentsListScreen> {
               showDialog(
                 context: context,
                 builder: (context) => AlertDialog(
-                  title: Text('مسح كل سجلات الحضور', style: GoogleFonts.cairo(fontWeight: FontWeight.bold)),
-                  content: Text('سيتم حذف كل سجلات الحضور من الخادم. هل أنت متأكد؟', style: GoogleFonts.cairo()),
+                  title: Text(
+                    'مسح كل سجلات الحضور',
+                    style: GoogleFonts.cairo(fontWeight: FontWeight.bold),
+                  ),
+                  content: Text(
+                    'سيتم حذف كل سجلات الحضور من الخادم. هل أنت متأكد؟',
+                    style: GoogleFonts.cairo(),
+                  ),
                   actions: [
                     TextButton(
                       onPressed: () => Navigator.pop(context),
-                      child: Text('إلغاء', style: GoogleFonts.cairo(color: Colors.grey)),
+                      child: Text(
+                        'إلغاء',
+                        style: GoogleFonts.cairo(color: Colors.grey),
+                      ),
                     ),
                     TextButton(
                       onPressed: () async {
@@ -210,10 +245,21 @@ class _StudentsListScreenState extends State<StudentsListScreen> {
                           _attended = [];
                         });
                         ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('تم مسح كل سجلات الحضور', style: GoogleFonts.cairo())),
+                          SnackBar(
+                            content: Text(
+                              'تم مسح كل سجلات الحضور',
+                              style: GoogleFonts.cairo(),
+                            ),
+                          ),
                         );
                       },
-                      child: Text('مسح الكل', style: GoogleFonts.cairo(color: Colors.red, fontWeight: FontWeight.bold)),
+                      child: Text(
+                        'مسح الكل',
+                        style: GoogleFonts.cairo(
+                          color: Colors.red,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -272,11 +318,13 @@ class _StudentsListScreenState extends State<StudentsListScreen> {
                 return Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: AppColors.white,
+                    color: context.appSurface,
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
+                        color: Colors.black.withValues(
+                          alpha: isDark ? 0.18 : 0.05,
+                        ),
                         blurRadius: 4,
                         offset: const Offset(0, 2),
                       ),
@@ -297,7 +345,7 @@ class _StudentsListScreenState extends State<StudentsListScreen> {
                               style: GoogleFonts.cairo(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
-                                color: AppColors.text,
+                                color: context.appText,
                               ),
                             ),
                           ),
@@ -310,7 +358,11 @@ class _StudentsListScreenState extends State<StudentsListScreen> {
                               shape: BoxShape.circle,
                             ),
                             child: Center(
-                              child: Icon(LucideIcons.check, color: AppColors.cardGreenIcon, size: 20),
+                              child: Icon(
+                                LucideIcons.check,
+                                color: AppColors.cardGreenIcon,
+                                size: 20,
+                              ),
                             ),
                           ),
                         ],
@@ -318,13 +370,20 @@ class _StudentsListScreenState extends State<StudentsListScreen> {
                       const SizedBox(height: 6),
                       Row(
                         children: [
-                          Icon(LucideIcons.graduationCap, size: 14, color: AppColors.textLight),
+                          Icon(
+                            LucideIcons.graduationCap,
+                            size: 14,
+                            color: context.appTextLight,
+                          ),
                           const SizedBox(width: 6),
                           Expanded(
                             child: Text(
                               '${(student['level'] ?? '').toString()} - ${(student['department'] ?? '').toString()}',
                               textAlign: TextAlign.right,
-                              style: GoogleFonts.cairo(fontSize: 12, color: AppColors.textLight),
+                              style: GoogleFonts.cairo(
+                                fontSize: 12,
+                                color: context.appTextLight,
+                              ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -334,11 +393,18 @@ class _StudentsListScreenState extends State<StudentsListScreen> {
                       const SizedBox(height: 4),
                       Row(
                         children: [
-                          Icon(LucideIcons.clock, size: 14, color: AppColors.textLight),
+                          Icon(
+                            LucideIcons.clock,
+                            size: 14,
+                            color: context.appTextLight,
+                          ),
                           const SizedBox(width: 6),
                           Text(
                             _formatTime(student['time']),
-                            style: GoogleFonts.cairo(fontSize: 12, color: AppColors.textLight),
+                            style: GoogleFonts.cairo(
+                              fontSize: 12,
+                              color: context.appTextLight,
+                            ),
                           ),
                         ],
                       ),
@@ -348,13 +414,19 @@ class _StudentsListScreenState extends State<StudentsListScreen> {
                         children: [
                           IconButton(
                             onPressed: () => _deleteStudent(student),
-                            icon: const Icon(LucideIcons.trash2, color: Colors.red),
+                            icon: const Icon(
+                              LucideIcons.trash2,
+                              color: Colors.red,
+                            ),
                             tooltip: 'حذف من السجل',
                           ),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 6,
+                            ),
                             decoration: BoxDecoration(
-                              color: AppColors.background,
+                              color: context.appSurfaceVariant,
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: Text(
@@ -362,7 +434,7 @@ class _StudentsListScreenState extends State<StudentsListScreen> {
                               style: GoogleFonts.cairo(
                                 fontSize: 12,
                                 fontWeight: FontWeight.bold,
-                                color: AppColors.text,
+                                color: context.appText,
                               ),
                             ),
                           ),

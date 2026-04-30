@@ -1891,7 +1891,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                         style: GoogleFonts.cairo(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
-                          color: isDark ? Colors.white : AppColors.text,
+                          color: isDark ? Colors.white : context.appText,
                         ),
                       ),
                       Text(
@@ -1900,7 +1900,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                           fontSize: 12,
                           color: isDark
                               ? Colors.grey[400]
-                              : AppColors.textLight,
+                              : context.appTextLight,
                         ),
                       ),
                     ],
@@ -2099,7 +2099,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                     Icon(
                       icon,
                       size: 20,
-                      color: isDark ? Colors.white : AppColors.text,
+                      color: isDark ? Colors.white : context.appText,
                     ),
                     const SizedBox(width: 8),
                     Text(
@@ -2107,7 +2107,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                       style: GoogleFonts.cairo(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: isDark ? Colors.white : AppColors.text,
+                        color: isDark ? Colors.white : context.appText,
                       ),
                     ),
                     if (subtitle != null) const SizedBox(width: 8),
@@ -2117,7 +2117,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                         style: GoogleFonts.cairo(
                           color: isDark
                               ? Colors.grey[400]
-                              : AppColors.textLight,
+                              : context.appTextLight,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -2152,7 +2152,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
           Text(
             message,
             style: GoogleFonts.cairo(
-              color: isDark ? Colors.grey[400] : AppColors.textLight,
+              color: isDark ? Colors.grey[400] : context.appTextLight,
               fontWeight: FontWeight.bold,
               fontSize: 14,
             ),

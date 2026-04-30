@@ -489,7 +489,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
                 style: GoogleFonts.cairo(fontWeight: FontWeight.bold),
               ),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white,
+                backgroundColor: context.appSurface,
                 foregroundColor: Colors.red[600],
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(
