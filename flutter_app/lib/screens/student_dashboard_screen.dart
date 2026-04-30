@@ -551,6 +551,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
                           channelName: subject,
                           userName: widget.studentName ?? widget.studentCode,
                           isTeacher: false,
+                          userId: widget.studentCode,
                           levelId: '${widget.department}__${widget.level}',
                           subjectId: subject,
                         ),

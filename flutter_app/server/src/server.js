@@ -50,6 +50,7 @@ const allowedCollections = new Set([
   'submissions',
   'library',
   'messages',
+  'live_sessions',
 ]);
 
 const models = new Map();

@@ -239,6 +239,10 @@ class ApiService {
     return _OfflineStore.list('messages', () => <Map<String, dynamic>>[]);
   }
 
+  static Future<List<Map<String, dynamic>>> _liveSessions() {
+    return _OfflineStore.list('live_sessions', () => <Map<String, dynamic>>[]);
+  }
+
   static Future<void> _save(String key, List<Map<String, dynamic>> rows) async {
     await _OfflineStore.save(key, rows);
     _emitChange();
@@ -299,6 +303,18 @@ class ApiService {
     }
 
     final now = DateTime.now().millisecondsSinceEpoch;
+    final liveSessions = await _liveSessions();
+    for (final session in liveSessions) {
+      final sessionCode = (session['code'] ?? '').toString();
+      final lectureId = (session['lectureId'] ?? '').toString();
+      final expiresAt =
+          int.tryParse((session['expiresAt'] ?? 0).toString()) ?? 0;
+      final isActive = session['active'] == true && expiresAt > now;
+      if (isActive && (sessionCode == raw || lectureId == raw)) {
+        return Map<String, dynamic>.from(session);
+      }
+    }
+
     for (final session in _activeSessions.values) {
       final sessionCode = (session['code'] ?? '').toString();
       final expiresAt =
@@ -1343,8 +1359,22 @@ class ApiService {
       'levelId': levelId,
       'subjectId': subjectId,
       'teacherId': userId,
+      'active': true,
+      'startedAt': _nowIso(),
     };
     _activeSessions[userId] = session;
+    final rows = await _liveSessions();
+    for (final row in rows) {
+      final sameTeacher = (row['teacherId'] ?? '').toString() == userId;
+      final sameLecture =
+          row['levelId'] == levelId && row['subjectId'] == subjectId;
+      if (sameTeacher || sameLecture) {
+        row['active'] = false;
+        row['endedAt'] ??= _nowIso();
+      }
+    }
+    rows.insert(0, session);
+    await _save('live_sessions', rows);
     return session;
   }
 
@@ -1389,10 +1419,31 @@ class ApiService {
       return session['lectureId'] == lectureId ||
           session['teacherId'] == teacherId;
     });
+    final sessions = await _liveSessions();
+    for (final session in sessions) {
+      if (session['lectureId'] == lectureId ||
+          session['teacherId'] == teacherId) {
+        session['active'] = false;
+        session['endedAt'] = _nowIso();
+      }
+    }
+    await _save('live_sessions', sessions);
     await _save('attendance', rows);
   }
 
   static Future<Map<String, dynamic>?> getActiveSession(String userId) async {
+    final liveSessions = await _liveSessions();
+    final now = DateTime.now().millisecondsSinceEpoch;
+    for (final session in liveSessions) {
+      final expiresAt =
+          int.tryParse((session['expiresAt'] ?? 0).toString()) ?? 0;
+      if ((session['teacherId'] ?? '').toString() == userId &&
+          session['active'] == true &&
+          expiresAt > now) {
+        return Map<String, dynamic>.from(session);
+      }
+    }
+
     final session = _activeSessions[userId];
     if (session == null) return null;
     final expiresAt = int.tryParse((session['expiresAt'] ?? 0).toString()) ?? 0;
@@ -1401,6 +1452,25 @@ class ApiService {
       return null;
     }
     return session;
+  }
+
+  static Future<Map<String, dynamic>?> getActiveSessionForLecture({
+    required String levelId,
+    required String subjectId,
+  }) async {
+    final sessions = await _liveSessions();
+    final now = DateTime.now().millisecondsSinceEpoch;
+    for (final session in sessions) {
+      final expiresAt =
+          int.tryParse((session['expiresAt'] ?? 0).toString()) ?? 0;
+      if (session['levelId'] == levelId &&
+          session['subjectId'] == subjectId &&
+          session['active'] == true &&
+          expiresAt > now) {
+        return Map<String, dynamic>.from(session);
+      }
+    }
+    return null;
   }
 }
 

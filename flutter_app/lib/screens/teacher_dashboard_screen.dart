@@ -1987,6 +1987,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                           channelName: targetCourse.name,
                           userName: _teacherProfile?.username ?? 'معلم',
                           isTeacher: true,
+                          userId: widget.teacherId,
                           levelId:
                               '${targetCourse.department}__${targetCourse.level}',
                           subjectId: targetCourse.name,
