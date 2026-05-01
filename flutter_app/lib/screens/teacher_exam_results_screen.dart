@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'dart:typed_data';
+import 'package:excel/excel.dart' as xls;
+import 'package:file_picker/file_picker.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../constants/theme.dart';
@@ -132,7 +135,7 @@ class _TeacherExamResultsScreenState extends State<TeacherExamResultsScreen> {
                             width: 44,
                             height: 44,
                             decoration: BoxDecoration(
-                              color: Colors.blue.withOpacity(0.1),
+                              color: Colors.blue.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: const Icon(
@@ -225,12 +228,16 @@ class _ExamResultsDetailsScreenState extends State<ExamResultsDetailsScreen> {
         department: widget.department,
         level: widget.level,
       );
+      final results = await ApiService.getExamResults(widget.examId);
       for (final s in students) {
         final code = (s['studentCode'] ?? s['code'] ?? '').toString();
         if (code.isEmpty) continue;
         try {
-          final latest = await ApiService.getLatestExamResult(code);
-          if (latest == null) continue;
+          final latest = results.firstWhere(
+            (row) => (row['studentCode'] ?? '').toString() == code,
+            orElse: () => <String, dynamic>{},
+          );
+          if (latest.isEmpty) continue;
           final examId = (latest['examId'] ?? '').toString();
           if (examId == widget.examId) {
             _rows.add({
@@ -250,6 +257,47 @@ class _ExamResultsDetailsScreenState extends State<ExamResultsDetailsScreen> {
     setState(() {
       _loading = false;
     });
+  }
+
+  Future<void> _exportResults() async {
+    final excel = xls.Excel.createExcel();
+    final sheet = excel['Results'];
+    sheet.appendRow([
+      xls.TextCellValue('كود الطالب'),
+      xls.TextCellValue('اسم الطالب'),
+      xls.TextCellValue('الدرجة %'),
+      xls.TextCellValue('صحيح'),
+      xls.TextCellValue('خطأ'),
+      xls.TextCellValue('الإجمالي'),
+      xls.TextCellValue('وقت التسليم'),
+    ]);
+    for (final row in _rows) {
+      sheet.appendRow([
+        xls.TextCellValue((row['code'] ?? '').toString()),
+        xls.TextCellValue((row['name'] ?? '').toString()),
+        xls.DoubleCellValue(
+          double.tryParse((row['score'] ?? 0).toString()) ?? 0,
+        ),
+        xls.IntCellValue(int.tryParse((row['correct'] ?? 0).toString()) ?? 0),
+        xls.IntCellValue(int.tryParse((row['wrong'] ?? 0).toString()) ?? 0),
+        xls.IntCellValue(int.tryParse((row['total'] ?? 0).toString()) ?? 0),
+        xls.TextCellValue((row['submittedAt'] ?? '').toString()),
+      ]);
+    }
+    final bytes = excel.encode();
+    if (bytes == null) return;
+    await FilePicker.platform.saveFile(
+      dialogTitle: 'حفظ نتائج الامتحان',
+      fileName: 'exam-results-${widget.examId}.xlsx',
+      bytes: Uint8List.fromList(bytes),
+    );
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('تم تجهيز ملف Excel', style: GoogleFonts.cairo()),
+        backgroundColor: Colors.green,
+      ),
+    );
   }
 
   @override
@@ -272,6 +320,13 @@ class _ExamResultsDetailsScreenState extends State<ExamResultsDetailsScreen> {
             icon: const Icon(LucideIcons.arrowRight, color: AppColors.primary),
             onPressed: () => Navigator.pop(context),
           ),
+          actions: [
+            IconButton(
+              tooltip: 'تصدير Excel',
+              icon: const Icon(LucideIcons.fileSpreadsheet),
+              onPressed: _rows.isEmpty ? null : _exportResults,
+            ),
+          ],
         ),
         body: _loading
             ? const Center(child: CircularProgressIndicator())
@@ -330,7 +385,7 @@ class _ExamResultsDetailsScreenState extends State<ExamResultsDetailsScreen> {
                               width: 44,
                               height: 44,
                               decoration: BoxDecoration(
-                                color: Colors.green.withOpacity(0.1),
+                                color: Colors.green.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: const Icon(
@@ -406,7 +461,7 @@ class _ExamResultsDetailsScreenState extends State<ExamResultsDetailsScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(

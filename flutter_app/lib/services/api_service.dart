@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../constants/api.dart';
 import '../models/teacher_model.dart';
+import 'cloudinary_service.dart';
 import 'mock_data_service.dart';
 
 class ApiService {
@@ -140,6 +141,44 @@ class ApiService {
     if (raw.isEmpty) return fallback;
     if (raw.startsWith('data:')) return raw;
     return 'data:${_mimeForFile(fileName)};base64,$raw';
+  }
+
+  static Future<String> _storedUrlFromBytes(
+    dynamic bytes, {
+    required String fileName,
+    String fallback = '',
+  }) async {
+    if (bytes is Uint8List && bytes.isNotEmpty) {
+      final uploaded = await CloudinaryService.uploadFile(
+        fileBytes: bytes,
+        fileName: fileName,
+      );
+      if ((uploaded ?? '').isNotEmpty) return uploaded!;
+    }
+    if (bytes is List<int> && bytes.isNotEmpty) {
+      final uploaded = await CloudinaryService.uploadFile(
+        fileBytes: Uint8List.fromList(bytes),
+        fileName: fileName,
+      );
+      if ((uploaded ?? '').isNotEmpty) return uploaded!;
+    }
+    return _offlineUrlFromBytes(bytes, fileName: fileName, fallback: fallback);
+  }
+
+  static Future<String> _storedUrlFromBase64(
+    dynamic value, {
+    required String fileName,
+    String fallback = '',
+  }) async {
+    final raw = (value ?? '').toString().trim();
+    if (raw.isNotEmpty) {
+      final uploaded = await CloudinaryService.uploadBase64(
+        base64Value: raw,
+        fileName: fileName,
+      );
+      if ((uploaded ?? '').isNotEmpty) return uploaded!;
+    }
+    return _offlineUrlFromBase64(value, fileName: fileName, fallback: fallback);
   }
 
   static bool _matchesLevel(Map<String, dynamic> row, String? levelId) {
@@ -441,6 +480,35 @@ class ApiService {
     required String subjectId,
     required String teacherId,
   }) async {
+    if (!offlineMode && baseUrl.isNotEmpty) {
+      final existingRows = await _BackendStore.list(
+        'attendance',
+        query: {'lectureId': lectureId, 'studentCode': studentId},
+      );
+      final record = {
+        'id': existingRows.isEmpty
+            ? _newId('attendance')
+            : (existingRows.first['id'] ?? existingRows.first['_id']),
+        'studentCode': studentId,
+        'studentName': name,
+        'name': name,
+        'department': department,
+        'level': level,
+        'lectureId': lectureId,
+        'levelId': levelId,
+        'subjectId': subjectId,
+        'teacherId': teacherId,
+        'status': 'Present',
+        'timestamp': _nowIso(),
+      };
+      if (existingRows.isEmpty) {
+        await _create('attendance', record);
+      } else {
+        await _update('attendance', record['id'].toString(), record);
+      }
+      return;
+    }
+
     final rows = await _attendance();
     final existing = rows.indexWhere((row) {
       return row['lectureId'] == lectureId &&
@@ -471,7 +539,9 @@ class ApiService {
   static Future<List<Map<String, dynamic>>> getCumulativeAttendance(
     String levelId,
   ) async {
-    final rows = await _attendance();
+    final rows = !offlineMode && baseUrl.isNotEmpty
+        ? await _BackendStore.list('attendance', query: {'levelId': levelId})
+        : await _attendance();
     final students = await getStudents(
       department: levelId.contains('__') ? levelId.split('__').first : null,
       level: levelId.contains('__') ? levelId.split('__').last : null,
@@ -503,7 +573,12 @@ class ApiService {
   static Future<List<Map<String, dynamic>>> getAttendanceByLecture(
     String lectureId,
   ) async {
-    final rows = await _attendance();
+    final rows = !offlineMode && baseUrl.isNotEmpty
+        ? await _BackendStore.list(
+            'attendance',
+            query: {'lectureId': lectureId},
+          )
+        : await _attendance();
     return rows.where((row) {
       return row['lectureId'] == lectureId &&
           (row['status'] ?? '') == 'Present';
@@ -708,7 +783,7 @@ class ApiService {
 
   static Future<void> addAssignment(Map<String, dynamic> payload) async {
     final fileName = (payload['fileName'] ?? 'assignment.pdf').toString();
-    final pdfUrl = _offlineUrlFromBytes(
+    final pdfUrl = await _storedUrlFromBytes(
       payload['fileBytes'],
       fileName: fileName,
       fallback: (payload['pdfUrl'] ?? '').toString(),
@@ -756,7 +831,7 @@ class ApiService {
     final fileName =
         (payload['fileName'] ?? 'submission_${payload['studentCode']}.pdf')
             .toString();
-    final fileUrl = _offlineUrlFromBytes(
+    final fileUrl = await _storedUrlFromBytes(
       payload['fileBytes'],
       fileName: fileName,
       fallback: (payload['fileUrl'] ?? '').toString(),
@@ -837,7 +912,7 @@ class ApiService {
   static Future<void> addLibraryBook(Map<String, dynamic> book) async {
     final fileName = (book['fileName'] ?? book['title'] ?? 'library-file')
         .toString();
-    final url = _offlineUrlFromBytes(
+    final url = await _storedUrlFromBytes(
       book['fileBytes'],
       fileName: fileName,
       fallback: (book['url'] ?? '').toString(),
@@ -875,7 +950,7 @@ class ApiService {
     Map<String, dynamic> payload,
   ) async {
     final id = _newId('announcement');
-    final imageUrl = _offlineUrlFromBase64(
+    final imageUrl = await _storedUrlFromBase64(
       payload['imageBase64'],
       fileName: (payload['imageName'] ?? 'announcement.png').toString(),
       fallback: (payload['imageUrl'] ?? '').toString(),
@@ -963,7 +1038,7 @@ class ApiService {
     await addSchedule({
       'subject': imageName,
       'imageName': imageName,
-      'imageUrl': _offlineUrlFromBase64(
+      'imageUrl': await _storedUrlFromBase64(
         imageBase64,
         fileName: imageName,
         fallback: imageBase64,
@@ -1035,9 +1110,10 @@ class ApiService {
     required String fileBase64,
   }) async {
     final id = _newId('material');
+    final url = await _storedUrlFromBase64(fileBase64, fileName: fileName);
     final row = await _create('materials', {
       'id': id,
-      'url': _offlineUrlFromBase64(fileBase64, fileName: fileName),
+      'url': url,
       'originalName': fileName,
       'department': department,
       'level': level,
@@ -1045,6 +1121,15 @@ class ApiService {
       'teacherName': teacherName,
       'uploadedAt': _nowIso(),
     });
+    unawaited(
+      addNotification(
+        title: 'New material: $subject',
+        message: fileName,
+        levelId: _levelId(department, level),
+      ).catchError(
+        (error) => debugPrint('Material notification failed: $error'),
+      ),
+    );
     return (row['id'] ?? id).toString();
   }
 
@@ -1105,9 +1190,68 @@ class ApiService {
     String levelId,
   ) async* {
     if (!offlineMode && baseUrl.isNotEmpty) {
-      while (true) {
-        yield await getNotifications(levelId: levelId);
-        await Future<void>.delayed(const Duration(seconds: 10));
+      final client = http.Client();
+      var current = await getNotifications(levelId: levelId);
+      yield current;
+      try {
+        final uri = Uri.parse(
+          '$baseUrl/api/notifications/stream',
+        ).replace(queryParameters: {'levelId': levelId});
+        final request = http.Request('GET', uri);
+        final response = await client
+            .send(request)
+            .timeout(const Duration(seconds: 10));
+        if (response.statusCode < 200 || response.statusCode >= 300) {
+          throw Exception('SSE ${response.statusCode}');
+        }
+
+        var eventType = '';
+        await for (final line
+            in response.stream
+                .transform(utf8.decoder)
+                .transform(const LineSplitter())) {
+          if (line.startsWith('event:')) {
+            eventType = line.substring(6).trim();
+          } else if (line.startsWith('data:')) {
+            final raw = line.substring(5).trim();
+            if (eventType == 'snapshot') {
+              final decoded = jsonDecode(raw);
+              if (decoded is List) {
+                current = decoded
+                    .whereType<Map>()
+                    .map(
+                      (row) => row.map(
+                        (key, value) => MapEntry(key.toString(), value),
+                      ),
+                    )
+                    .toList();
+                yield current;
+              }
+            } else if (eventType == 'notification') {
+              final decoded = jsonDecode(raw);
+              if (decoded is Map) {
+                final row = decoded.map(
+                  (key, value) => MapEntry(key.toString(), value),
+                );
+                final id = (row['id'] ?? row['_id'] ?? '').toString();
+                current = [
+                  row,
+                  ...current.where((item) {
+                    return (item['id'] ?? item['_id'] ?? '').toString() != id;
+                  }),
+                ];
+                yield current;
+              }
+            }
+          }
+        }
+      } catch (_) {
+        while (true) {
+          yield await getNotifications(levelId: levelId);
+          await Future<void>.delayed(const Duration(seconds: 10));
+        }
+      } finally {
+        client.close();
       }
     }
     yield* _watchList(() => getNotifications(levelId: levelId));
@@ -1385,6 +1529,28 @@ class ApiService {
   }
 
   static Future<void> addExamResult(Map<String, dynamic> payload) async {
+    final existing = await getExamResult(
+      (payload['studentCode'] ?? '').toString(),
+      (payload['examId'] ?? '').toString(),
+    );
+    if (existing != null) {
+      final id = (existing['id'] ?? existing['_id'] ?? '').toString();
+      if (id.isNotEmpty) {
+        await _update('exam_results', id, {
+          ..._mapOf(payload),
+          'submittedAt': payload['submittedAt'] ?? _nowIso(),
+        });
+        return;
+      }
+    }
+    if (!offlineMode && baseUrl.isNotEmpty) {
+      await _create('exam_results', {
+        ..._mapOf(payload),
+        'id': _newId('exam-result'),
+        'submittedAt': payload['submittedAt'] ?? _nowIso(),
+      });
+      return;
+    }
     final rows = await _examResults();
     rows.insert(0, {
       ..._mapOf(payload),
@@ -1394,10 +1560,46 @@ class ApiService {
     await _save('exam_results', rows);
   }
 
+  static Future<Map<String, dynamic>?> getExamResult(
+    String studentCode,
+    String examId,
+  ) async {
+    final rows = !offlineMode && baseUrl.isNotEmpty
+        ? await _BackendStore.list(
+            'exam_results',
+            query: {'studentCode': studentCode, 'examId': examId},
+          )
+        : await _examResults();
+    final filtered = rows.where((row) {
+      return row['studentCode'].toString() == studentCode &&
+          row['examId'].toString() == examId;
+    }).toList();
+    filtered.sort((a, b) => _compareDesc(a, b, 'submittedAt'));
+    return filtered.isEmpty ? null : filtered.first;
+  }
+
+  static Future<List<Map<String, dynamic>>> getExamResults(
+    String examId,
+  ) async {
+    final rows = !offlineMode && baseUrl.isNotEmpty
+        ? await _BackendStore.list('exam_results', query: {'examId': examId})
+        : await _examResults();
+    final filtered = rows
+        .where((row) => row['examId'].toString() == examId)
+        .toList();
+    filtered.sort((a, b) => _compareDesc(a, b, 'submittedAt'));
+    return filtered;
+  }
+
   static Future<Map<String, dynamic>?> getLatestExamResult(
     String studentCode,
   ) async {
-    final rows = await _examResults();
+    final rows = !offlineMode && baseUrl.isNotEmpty
+        ? await _BackendStore.list(
+            'exam_results',
+            query: {'studentCode': studentCode},
+          )
+        : await _examResults();
     final filtered = rows
         .where((row) => row['studentCode'].toString() == studentCode)
         .toList();
@@ -1417,7 +1619,9 @@ class ApiService {
   }
 
   static Future<List<Map<String, dynamic>>> getExams() async {
-    final rows = await _exams();
+    final rows = !offlineMode && baseUrl.isNotEmpty
+        ? await _BackendStore.list('exams')
+        : await _exams();
     rows.sort((a, b) => _compareDesc(a, b, 'createdAt'));
     return rows;
   }
@@ -1649,6 +1853,59 @@ class ApiService {
     final department = parts.isNotEmpty ? parts.first : '';
     final level = parts.length > 1 ? parts.sublist(1).join('__') : '';
     final students = await getStudents(department: department, level: level);
+
+    if (!offlineMode && baseUrl.isNotEmpty) {
+      final existingRows = await _BackendStore.list(
+        'attendance',
+        query: {'lectureId': lectureId},
+      );
+      for (final student in students) {
+        final code = (student['studentCode'] ?? student['code'] ?? '')
+            .toString();
+        if (code.isEmpty || presentStudentCodes.contains(code)) continue;
+        final exists = existingRows.any(
+          (row) => row['studentCode'].toString() == code,
+        );
+        if (exists) continue;
+        await _create('attendance', {
+          'id': _newId('attendance'),
+          'studentCode': code,
+          'studentName': student['fullName'] ?? student['name'] ?? '',
+          'name': student['fullName'] ?? student['name'] ?? '',
+          'department': department,
+          'level': level,
+          'lectureId': lectureId,
+          'levelId': levelId,
+          'subjectId': subjectId,
+          'teacherId': teacherId,
+          'status': 'Absent',
+          'timestamp': _nowIso(),
+        });
+      }
+
+      _activeSessions.removeWhere((_, session) {
+        return session['lectureId'] == lectureId ||
+            session['teacherId'] == teacherId;
+      });
+      final sessions = await _BackendStore.list(
+        'live_sessions',
+        query: {'teacherId': teacherId, 'active': 'true'},
+      );
+      for (final session in sessions) {
+        if (session['lectureId'] == lectureId ||
+            session['teacherId'] == teacherId) {
+          final id = (session['id'] ?? session['_id'] ?? '').toString();
+          if (id.isNotEmpty) {
+            await _update('live_sessions', id, {
+              'active': false,
+              'endedAt': _nowIso(),
+            });
+          }
+        }
+      }
+      return;
+    }
+
     final rows = await _attendance();
 
     for (final student in students) {

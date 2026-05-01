@@ -357,6 +357,32 @@ class _StudentElectronicExamsScreenState
     return InkWell(
       onTap: () async {
         final now = DateTime.now();
+        final existingResult = await ApiService.getExamResult(
+          widget.studentCode,
+          exam.id,
+        );
+        if (existingResult != null) {
+          await _setLastCompleted(exam.id);
+          _latestResult = existingResult;
+          if (mounted) setState(() {});
+          final end = exam.endTime == null
+              ? null
+              : DateTime.tryParse(exam.endTime!);
+          final canShowScore = end == null || now.isAfter(end);
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                canShowScore
+                    ? 'تم تسليم هذا الامتحان من قبل. نتيجتك: ${existingResult['score'] ?? 0}%'
+                    : 'تم تسليم هذا الامتحان من قبل. ستظهر النتيجة بعد انتهاء الوقت.',
+                style: GoogleFonts.cairo(),
+              ),
+            ),
+          );
+          return;
+        }
+        if (!mounted) return;
         if (exam.startTime != null) {
           final start = DateTime.tryParse(exam.startTime!);
           if (start != null && now.isBefore(start)) {

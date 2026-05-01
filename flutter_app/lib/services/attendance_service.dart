@@ -1,4 +1,3 @@
-
 import '../constants/api.dart';
 
 class AttendanceService {
@@ -16,6 +15,7 @@ class AttendanceService {
   String? _currentLevelId;
   String? _currentSubjectId;
   String? _currentTeacherId;
+  int _qrNonce = 0;
 
   String? get currentCode => _currentCode;
   List<Map<String, String>> get presentStudents => _presentStudents;
@@ -45,8 +45,16 @@ class AttendanceService {
     _currentTeacherId = teacherId;
     _sessionExpiry = DateTime.fromMillisecondsSinceEpoch(expiresAtMs);
     _presentStudents.clear();
+    _qrNonce = 0;
+    refreshQrPayload();
+  }
+
+  void refreshQrPayload() {
+    if (_currentLectureId == null) return;
+    _qrNonce++;
     final ts = DateTime.now().millisecondsSinceEpoch;
-    _currentQrPayload = '$baseUrl/mark-attendance?lectureId=$lectureId&timestamp=$ts';
+    _currentQrPayload =
+        '$baseUrl/mark-attendance?lectureId=$_currentLectureId&timestamp=$ts&nonce=$_qrNonce';
   }
 
   void endSession() {
@@ -54,6 +62,10 @@ class AttendanceService {
     _sessionExpiry = null;
     _currentLectureId = null;
     _currentQrPayload = null;
+    _currentLevelId = null;
+    _currentSubjectId = null;
+    _currentTeacherId = null;
+    _qrNonce = 0;
   }
 
   // Validate the entered code
@@ -74,7 +86,9 @@ class AttendanceService {
 
     // Check if student is already registered
     final isAlreadyRegistered = _presentStudents.any((s) => s['code'] == code);
-    if (isAlreadyRegistered) return true; // Already registered, treat as success
+    if (isAlreadyRegistered) {
+      return true; // Already registered, treat as success
+    }
 
     _presentStudents.add({
       'name': name,
@@ -84,19 +98,18 @@ class AttendanceService {
       'status': status,
       'time': DateTime.now().toString(),
     });
-    
+
     return true;
   }
-  
+
   // Get formatted expiry time
   String get remainingTime {
     if (_sessionExpiry == null) return '00:00';
     final remaining = _sessionExpiry!.difference(DateTime.now());
     if (remaining.isNegative) return '00:00';
-    
+
     final minutes = remaining.inMinutes.toString().padLeft(2, '0');
     final seconds = (remaining.inSeconds % 60).toString().padLeft(2, '0');
     return '$minutes:$seconds';
   }
-
 }

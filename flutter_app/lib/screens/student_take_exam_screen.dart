@@ -33,9 +33,21 @@ class _StudentTakeExamScreenState extends State<StudentTakeExamScreen>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _secondsRemaining = (widget.exam.durationMinutes ?? 30) * 60;
+    _secondsRemaining = _calculateInitialSeconds();
     _fetchQuestions();
     _startTimer();
+  }
+
+  int _calculateInitialSeconds() {
+    final now = DateTime.now();
+    final durationSeconds = (widget.exam.durationMinutes ?? 30) * 60;
+    final endTime = widget.exam.endTime == null
+        ? null
+        : DateTime.tryParse(widget.exam.endTime!);
+    if (endTime == null) return durationSeconds;
+    final endRemaining = endTime.difference(now).inSeconds;
+    if (endRemaining <= 0) return 0;
+    return endRemaining < durationSeconds ? endRemaining : durationSeconds;
   }
 
   @override
@@ -160,6 +172,10 @@ class _StudentTakeExamScreenState extends State<StudentTakeExamScreen>
   }
 
   void _startTimer() {
+    if (_secondsRemaining <= 0) {
+      scheduleMicrotask(() => _submitExam(isAutoSubmit: true));
+      return;
+    }
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (_secondsRemaining > 0) {
         setState(() {
@@ -400,7 +416,7 @@ class _StudentTakeExamScreenState extends State<StudentTakeExamScreen>
               margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               padding: const EdgeInsets.symmetric(horizontal: 12),
               decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.1),
+                color: AppColors.primary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Center(
@@ -421,8 +437,10 @@ class _StudentTakeExamScreenState extends State<StudentTakeExamScreen>
               value: _questions.isEmpty
                   ? 0
                   : _answers.length / _questions.length,
-              backgroundColor: AppColors.primary.withOpacity(0.1),
-              valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+              backgroundColor: AppColors.primary.withValues(alpha: 0.1),
+              valueColor: const AlwaysStoppedAnimation<Color>(
+                AppColors.primary,
+              ),
             ),
             Expanded(
               child: ListView.builder(
@@ -565,7 +583,7 @@ class _StudentTakeExamScreenState extends State<StudentTakeExamScreen>
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppColors.primary.withOpacity(0.05)
+              ? AppColors.primary.withValues(alpha: 0.05)
               : Colors.transparent,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(

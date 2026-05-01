@@ -11,6 +11,9 @@ const app = express();
 const port = Number(process.env.PORT || 3000);
 const mongoUri = process.env.MONGODB_URI;
 const corsOrigin = process.env.CORS_ORIGIN || '*';
+const cloudinaryCloudName = process.env.CLOUDINARY_CLOUD_NAME || '';
+const cloudinaryUploadPreset = process.env.CLOUDINARY_UPLOAD_PRESET || '';
+const cloudinaryFolder = process.env.CLOUDINARY_FOLDER || 'collage_app';
 
 function loadEnvFile() {
   const envPath = path.join(__dirname, '..', '.env');
@@ -54,6 +57,7 @@ const allowedCollections = new Set([
 ]);
 
 const models = new Map();
+const notificationClients = new Set();
 
 function getModel(collectionName) {
   if (!allowedCollections.has(collectionName)) {
@@ -83,6 +87,43 @@ function normalizeDoc(doc) {
   return row;
 }
 
+function isDataUri(value) {
+  return typeof value === 'string' && /^data:[^;]+;base64,/i.test(value);
+}
+
+async function uploadDataUriToCloudinary(value) {
+  if (!cloudinaryCloudName || !cloudinaryUploadPreset || !isDataUri(value)) {
+    return value;
+  }
+
+  const body = new URLSearchParams({
+    file: value,
+    upload_preset: cloudinaryUploadPreset,
+    folder: cloudinaryFolder,
+  });
+  const response = await fetch(
+    `https://api.cloudinary.com/v1_1/${cloudinaryCloudName}/auto/upload`,
+    { method: 'POST', body },
+  );
+  const text = await response.text();
+  if (!response.ok) {
+    throw clientError(`Cloudinary upload failed: ${text}`, 502);
+  }
+  const data = JSON.parse(text);
+  return data.secure_url || data.url || value;
+}
+
+async function prepareStoredFiles(payload) {
+  const next = { ...payload };
+  const fileFields = ['pdfUrl', 'fileUrl', 'url', 'imageUrl'];
+  for (const field of fileFields) {
+    if (isDataUri(next[field])) {
+      next[field] = await uploadDataUriToCloudinary(next[field]);
+    }
+  }
+  return next;
+}
+
 function buildQuery(query) {
   const mongoQuery = {};
   for (const [key, value] of Object.entries(query)) {
@@ -103,6 +144,25 @@ function clientError(message, status = 400) {
   const error = new Error(message);
   error.status = status;
   return error;
+}
+
+function writeSse(res, event, data) {
+  res.write(`event: ${event}\n`);
+  res.write(`data: ${JSON.stringify(data)}\n\n`);
+}
+
+function matchesNotificationLevel(rowLevelId, requestedLevelId) {
+  return !rowLevelId || !requestedLevelId || rowLevelId === requestedLevelId;
+}
+
+function emitNotification(row) {
+  const normalized = normalizeDoc(row);
+  const rowLevelId = (normalized.levelId || '').toString();
+  for (const client of notificationClients) {
+    if (matchesNotificationLevel(rowLevelId, client.levelId)) {
+      writeSse(client.res, 'notification', normalized);
+    }
+  }
 }
 
 app.use(cors({ origin: corsOrigin }));
@@ -141,6 +201,39 @@ app.get('/api/:collection', async (req, res, next) => {
   }
 });
 
+app.get('/api/notifications/stream', async (req, res, next) => {
+  try {
+    const levelId = (req.query.levelId || '').toString();
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.flushHeaders?.();
+
+    const client = { levelId, res };
+    notificationClients.add(client);
+
+    const Model = getModel('notifications');
+    const rows = await Model.find({
+      $or: [{ levelId }, { levelId: '' }, { levelId: { $exists: false } }],
+    })
+      .sort('-timestamp')
+      .limit(50)
+      .lean();
+    writeSse(res, 'snapshot', rows.map(normalizeDoc));
+
+    const heartbeat = setInterval(() => {
+      writeSse(res, 'ping', { time: new Date().toISOString() });
+    }, 25000);
+
+    req.on('close', () => {
+      clearInterval(heartbeat);
+      notificationClients.delete(client);
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
 app.get('/api/:collection/:id', async (req, res, next) => {
   try {
     const Model = getModel(req.params.collection);
@@ -161,10 +254,14 @@ app.get('/api/:collection/:id', async (req, res, next) => {
 app.post('/api/:collection', async (req, res, next) => {
   try {
     const Model = getModel(req.params.collection);
-    const payload = { ...req.body };
+    const payload = await prepareStoredFiles(req.body);
     payload.id = (payload.id || new mongoose.Types.ObjectId()).toString();
     const doc = await Model.create(payload);
-    res.status(201).json(normalizeDoc(doc));
+    const normalized = normalizeDoc(doc);
+    if (req.params.collection === 'notifications') {
+      emitNotification(normalized);
+    }
+    res.status(201).json(normalized);
   } catch (error) {
     next(error);
   }
@@ -176,10 +273,14 @@ app.put('/api/:collection/bulk', async (req, res, next) => {
     const items = Array.isArray(req.body.items) ? req.body.items : null;
     if (!items) throw clientError('Expected body: { "items": [...] }');
 
-    const normalized = items.map((item) => ({
-      ...item,
-      id: (item.id || item._id || new mongoose.Types.ObjectId()).toString(),
-    }));
+    const normalized = [];
+    for (const item of items) {
+      const prepared = await prepareStoredFiles(item);
+      normalized.push({
+        ...prepared,
+        id: (item.id || item._id || new mongoose.Types.ObjectId()).toString(),
+      });
+    }
 
     await Model.deleteMany({});
     if (normalized.length > 0) await Model.insertMany(normalized, { ordered: false });
@@ -193,6 +294,7 @@ app.patch('/api/:collection/:id', async (req, res, next) => {
   try {
     const Model = getModel(req.params.collection);
     const id = req.params.id;
+    const payload = await prepareStoredFiles(req.body);
     const row = await Model.findOneAndUpdate(
       {
         $or: [
@@ -202,7 +304,7 @@ app.patch('/api/:collection/:id', async (req, res, next) => {
           mongoose.Types.ObjectId.isValid(id) ? { _id: id } : { _id: null },
         ],
       },
-      { $set: req.body },
+      { $set: payload },
       { new: true },
     );
     if (!row) throw clientError('Document not found', 404);

@@ -51,6 +51,9 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
   Course? _selectedCourse;
   bool _courseSelectionQueued = false;
   bool _courseSelectionOpen = false;
+  bool _isLoadingTeacherStats = false;
+  String? _teacherStatsKey;
+  Map<String, dynamic>? _teacherStats;
 
   @override
   void initState() {
@@ -121,6 +124,13 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
     if (_selectedCourse == null && courses.length > 1) {
       _queueCourseSelectionDialog();
     }
+    _queueTeacherStatsLoad();
+  }
+
+  void _queueTeacherStatsLoad() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _loadTeacherStats();
+    });
   }
 
   bool _containsCourse(List<Course> courses, Course target) {
@@ -155,6 +165,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
       final course = courses.first;
       if (mounted) {
         setState(() => _selectedCourse = course);
+        _loadTeacherStats();
       } else {
         _selectedCourse = course;
       }
@@ -235,6 +246,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
     if (!mounted) return selected;
     if (selected != null) {
       setState(() => _selectedCourse = selected);
+      _loadTeacherStats();
       if (action == 'forum') {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (mounted) _openForumForLevel(selected);
@@ -263,6 +275,101 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
     ).then(
       (_) => _dataService.fetchTotalUnreadCount(widget.teacherId, 'teacher'),
     );
+  }
+
+  String _statsKeyFor(Course course) =>
+      '${course.department}__${course.level}__${course.name}';
+
+  Future<void> _loadTeacherStats({bool force = false}) async {
+    final course = _selectedCourse;
+    if (course == null) {
+      if (mounted) {
+        setState(() {
+          _teacherStats = null;
+          _teacherStatsKey = null;
+        });
+      }
+      return;
+    }
+
+    final key = _statsKeyFor(course);
+    if (!force && _teacherStatsKey == key && _teacherStats != null) return;
+
+    if (mounted) {
+      setState(() {
+        _isLoadingTeacherStats = true;
+        _teacherStatsKey = key;
+      });
+    }
+
+    try {
+      final levelId = '${course.department}__${course.level}';
+      final students = await ApiService.getStudents(
+        department: course.department,
+        level: course.level,
+      );
+      final attendance = await ApiService.getCumulativeAttendance(levelId);
+      final assignments = await ApiService.getAssignments(
+        department: course.department,
+        level: course.level,
+      );
+      var submittedAssignments = 0;
+      for (final assignment in assignments) {
+        final assignmentId = (assignment['id'] ?? assignment['_id'] ?? '')
+            .toString();
+        if (assignmentId.isEmpty) continue;
+        submittedAssignments += (await ApiService.getSubmissions(
+          assignmentId,
+        )).length;
+      }
+
+      final exams = (await ApiService.getExams()).where((exam) {
+        return exam['department'] == course.department &&
+            exam['level'] == course.level;
+      }).toList();
+      var scoreTotal = 0.0;
+      var scoreCount = 0;
+      for (final exam in exams) {
+        final examId = (exam['id'] ?? exam['_id'] ?? '').toString();
+        if (examId.isEmpty) continue;
+        final results = await ApiService.getExamResults(examId);
+        for (final result in results) {
+          final score = num.tryParse((result['score'] ?? '').toString());
+          if (score == null) continue;
+          scoreTotal += score.toDouble();
+          scoreCount++;
+        }
+      }
+
+      final attendanceAverage = attendance.isEmpty
+          ? 0.0
+          : attendance.fold<double>(
+                  0,
+                  (sum, row) =>
+                      sum +
+                      (num.tryParse(
+                            (row['percentage'] ?? '').toString(),
+                          )?.toDouble() ??
+                          0),
+                ) /
+                attendance.length;
+
+      if (!mounted || _teacherStatsKey != key) return;
+      setState(() {
+        _teacherStats = {
+          'students': students.length,
+          'attendance': attendanceAverage,
+          'submissions': submittedAssignments,
+          'averageGrade': scoreCount == 0 ? 0.0 : scoreTotal / scoreCount,
+        };
+        _isLoadingTeacherStats = false;
+      });
+    } catch (error) {
+      debugPrint('Teacher stats failed: $error');
+      if (mounted && _teacherStatsKey == key) {
+        setState(() => _isLoadingTeacherStats = false);
+      }
+    }
   }
 
   @override
@@ -512,6 +619,8 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
             children: [
               // 1. Welcome Card
               _buildWelcomeCard(),
+              const SizedBox(height: 16),
+              _buildTeacherStatsCard(),
               const SizedBox(height: 16),
 
               // 2. Announcements Card
@@ -1912,6 +2021,140 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
               ],
             ),
           ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTeacherStatsCard() {
+    final theme = Theme.of(context);
+    final stats = _teacherStats;
+    final items = [
+      (
+        icon: LucideIcons.users,
+        label: 'الطلاب',
+        value: '${stats?['students'] ?? 0}',
+      ),
+      (
+        icon: LucideIcons.userCheck,
+        label: 'الحضور',
+        value:
+            '${((stats?['attendance'] as num?)?.toDouble() ?? 0).toStringAsFixed(0)}%',
+      ),
+      (
+        icon: LucideIcons.clipboardCheck,
+        label: 'تسليمات التكليف',
+        value: '${stats?['submissions'] ?? 0}',
+      ),
+      (
+        icon: LucideIcons.barChart3,
+        label: 'متوسط الدرجات',
+        value:
+            '${((stats?['averageGrade'] as num?)?.toDouble() ?? 0).toStringAsFixed(0)}%',
+      ),
+    ];
+
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: theme.dividerColor),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(LucideIcons.barChart3, color: theme.colorScheme.primary),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'إحصائيات المادة',
+                  style: GoogleFonts.cairo(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: theme.textTheme.bodyLarge?.color,
+                  ),
+                ),
+              ),
+              IconButton(
+                tooltip: 'تحديث',
+                onPressed: _selectedCourse == null || _isLoadingTeacherStats
+                    ? null
+                    : () => _loadTeacherStats(force: true),
+                icon: _isLoadingTeacherStats
+                    ? SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: theme.colorScheme.primary,
+                        ),
+                      )
+                    : const Icon(LucideIcons.refreshCw),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          if (_selectedCourse == null)
+            _buildEmptyState('اختر مادة لعرض الإحصائيات')
+          else
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final isCompact = constraints.maxWidth < 700;
+                return GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: items.length,
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: isCompact ? 2 : 4,
+                    crossAxisSpacing: 10,
+                    mainAxisSpacing: 10,
+                    childAspectRatio: isCompact ? 1.8 : 1.65,
+                  ),
+                  itemBuilder: (context, index) {
+                    final item = items[index];
+                    return Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.surfaceContainerHighest
+                            .withValues(alpha: 0.35),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Icon(
+                            item.icon,
+                            color: theme.colorScheme.primary,
+                            size: 20,
+                          ),
+                          Text(
+                            item.value,
+                            style: GoogleFonts.cairo(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                              color: theme.textTheme.bodyLarge?.color,
+                            ),
+                          ),
+                          Text(
+                            item.label,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.cairo(
+                              fontSize: 12,
+                              color: theme.textTheme.bodySmall?.color,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
         ],
       ),
     );

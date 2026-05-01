@@ -3,11 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:qr_flutter/qr_flutter.dart';
-import '../constants/theme.dart';
 import '../services/attendance_service.dart';
 import '../services/api_service.dart';
-
-import 'dart:convert';
 
 class SmartAttendanceScreen extends StatefulWidget {
   final String teacherId;
@@ -30,12 +27,20 @@ class _SmartAttendanceScreenState extends State<SmartAttendanceScreen> {
   bool _isEnding = false;
   final TextEditingController _lectureIdController = TextEditingController();
   List<Map<String, String>> _attendees = [];
+  int _qrRefreshTick = 0;
 
   @override
   void initState() {
     super.initState();
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (mounted) {
+        if (AttendanceService.instance.isSessionActive) {
+          _qrRefreshTick++;
+          if (_qrRefreshTick >= 30) {
+            _qrRefreshTick = 0;
+            AttendanceService.instance.refreshQrPayload();
+          }
+        }
         setState(() {
           _attendees = List.from(AttendanceService.instance.presentStudents);
         });
@@ -172,6 +177,7 @@ class _SmartAttendanceScreenState extends State<SmartAttendanceScreen> {
     );
 
     if (confirm != true) return;
+    if (!mounted) return;
 
     setState(() => _isEnding = true);
     final messenger = ScaffoldMessenger.of(context);
