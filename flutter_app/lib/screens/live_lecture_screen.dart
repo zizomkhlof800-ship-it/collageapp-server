@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../constants/api.dart';
 import '../constants/theme.dart';
@@ -41,6 +42,15 @@ class _LiveLectureScreenState extends State<LiveLectureScreen> {
   String get _levelId => widget.levelId ?? '';
   String get _subjectId => widget.subjectId ?? widget.channelName;
   String get _userId => (widget.userId ?? widget.userName).trim();
+  String get _fallbackRoomName {
+    final base = [_levelId, _subjectId, widget.channelName].join('-');
+    final clean = base
+        .toLowerCase()
+        .replaceAll(RegExp(r'[^a-z0-9]+'), '-')
+        .replaceAll(RegExp(r'-+'), '-')
+        .replaceAll(RegExp(r'^-|-$'), '');
+    return 'collageapp-${clean.isEmpty ? 'lecture' : clean}';
+  }
 
   @override
   void initState() {
@@ -136,6 +146,7 @@ class _LiveLectureScreenState extends State<LiveLectureScreen> {
           ),
         ),
       );
+      await _openVideoRoom();
     } catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -148,6 +159,19 @@ class _LiveLectureScreenState extends State<LiveLectureScreen> {
       );
     } finally {
       if (mounted) setState(() => _joining = false);
+    }
+  }
+
+  Future<void> _openVideoRoom() async {
+    final session = _session;
+    final rawUrl = (session?['meetingUrl'] ?? '').toString();
+    final roomName = (session?['roomName'] ?? _fallbackRoomName).toString();
+    final uri = Uri.parse(
+      rawUrl.isNotEmpty ? rawUrl : 'https://meet.jit.si/$roomName',
+    );
+    final opened = await launchUrl(uri, mode: LaunchMode.inAppBrowserView);
+    if (!opened) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
     }
   }
 
@@ -249,6 +273,20 @@ class _LiveLectureScreenState extends State<LiveLectureScreen> {
         ),
         const SizedBox(height: 24),
         FilledButton.icon(
+          onPressed: _openVideoRoom,
+          icon: const Icon(LucideIcons.video),
+          label: Text(
+            'فتح بث الفيديو',
+            style: GoogleFonts.cairo(fontWeight: FontWeight.bold),
+          ),
+          style: FilledButton.styleFrom(
+            backgroundColor: AppColors.primary,
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(vertical: 14),
+          ),
+        ),
+        const SizedBox(height: 12),
+        FilledButton.icon(
           onPressed: _endLecture,
           icon: const Icon(LucideIcons.square),
           label: Text(
@@ -300,7 +338,7 @@ class _LiveLectureScreenState extends State<LiveLectureScreen> {
                 )
               : const Icon(LucideIcons.checkCircle),
           label: Text(
-            _joining ? 'جاري التسجيل...' : 'تسجيل الحضور والانضمام',
+            _joining ? 'جاري التسجيل...' : 'تسجيل الحضور وفتح الفيديو',
             style: GoogleFonts.cairo(fontWeight: FontWeight.bold),
           ),
           style: FilledButton.styleFrom(

@@ -1792,16 +1792,24 @@ class ApiService {
     int durationMinutes = 15,
     String lectureId = '',
   }) async {
+    final createdLectureId = lectureId.isEmpty ? _newId('lecture') : lectureId;
+    final roomName = _jitsiRoomName(
+      lectureId: createdLectureId,
+      levelId: levelId,
+      subjectId: subjectId,
+    );
     final session = {
       'code': (1000 + (DateTime.now().millisecondsSinceEpoch % 9000))
           .toString(),
       'expiresAt': DateTime.now()
           .add(Duration(minutes: durationMinutes))
           .millisecondsSinceEpoch,
-      'lectureId': lectureId.isEmpty ? _newId('lecture') : lectureId,
+      'lectureId': createdLectureId,
       'levelId': levelId,
       'subjectId': subjectId,
       'teacherId': userId,
+      'roomName': roomName,
+      'meetingUrl': 'https://meet.jit.si/$roomName',
       'active': true,
       'startedAt': _nowIso(),
     };
@@ -2026,6 +2034,28 @@ class ApiService {
         .toList();
     active.sort((a, b) => _compareDesc(a, b, 'startedAt'));
     return active;
+  }
+
+  static String _jitsiRoomName({
+    required String lectureId,
+    required String levelId,
+    required String subjectId,
+  }) {
+    String clean(String value) {
+      final sanitized = value
+          .toLowerCase()
+          .replaceAll(RegExp(r'[^a-z0-9]+'), '-')
+          .replaceAll(RegExp(r'-+'), '-')
+          .replaceAll(RegExp(r'^-|-$'), '');
+      return sanitized.isEmpty ? 'room' : sanitized;
+    }
+
+    return [
+      'collageapp',
+      clean(levelId),
+      clean(subjectId),
+      clean(lectureId),
+    ].join('-');
   }
 }
 

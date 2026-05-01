@@ -22,6 +22,7 @@ class SmartAttendanceScreen extends StatefulWidget {
 }
 
 class _SmartAttendanceScreenState extends State<SmartAttendanceScreen> {
+  static const int _qrRefreshSeconds = 300;
   Timer? _timer;
   bool _isGenerating = false;
   bool _isEnding = false;
@@ -36,7 +37,7 @@ class _SmartAttendanceScreenState extends State<SmartAttendanceScreen> {
       if (mounted) {
         if (AttendanceService.instance.isSessionActive) {
           _qrRefreshTick++;
-          if (_qrRefreshTick >= 30) {
+          if (_qrRefreshTick >= _qrRefreshSeconds) {
             _qrRefreshTick = 0;
             AttendanceService.instance.refreshQrPayload();
           }

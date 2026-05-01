@@ -51,6 +51,11 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
   Map<String, dynamic>? _latestExamResult;
   String _latestExamSubject = '';
   bool _allowedAccess = true;
+  bool _overviewLoading = true;
+  int _dueTodayAssignments = 0;
+  int _upcomingExams = 0;
+  int _unopenedMaterials = 0;
+  double _attendancePercentage = 0;
 
   @override
   void initState() {
@@ -70,6 +75,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
     _dataService.startNotificationsStream(levelId);
     _fetchLatestExamResult();
     _fetchAccessFlag();
+    _loadStudentOverview();
   }
 
   @override
@@ -416,6 +422,9 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
             _buildWelcomeHeader(),
             const SizedBox(height: 16),
 
+            _buildStudentOverviewCard(),
+            const SizedBox(height: 16),
+
             _buildLevelForumCard(),
             const SizedBox(height: 16),
 
@@ -435,6 +444,235 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
             const SizedBox(height: 16),
           ],
         ),
+      ),
+    );
+  }
+
+  String get _openedMaterialsKey =>
+      'opened_materials_${widget.studentCode}_${widget.department}_${widget.level}';
+
+  Future<void> _loadStudentOverview() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final opened = prefs.getStringList(_openedMaterialsKey) ?? <String>[];
+      final levelId = '${widget.department}__${widget.level}';
+      final assignments = await ApiService.getAssignments(
+        department: widget.department,
+        level: widget.level,
+      );
+      final exams = await ApiService.getExams();
+      final attendance = await ApiService.getCumulativeAttendance(levelId);
+      final materials = await ApiService.getMaterials(
+        department: widget.department,
+        level: widget.level,
+      );
+
+      final today = DateTime.now();
+      final dueToday = assignments.where((assignment) {
+        final deadline = _parseFlexibleDate(
+          (assignment['deadline'] ?? '').toString(),
+        );
+        return deadline != null && _isSameDay(deadline, today);
+      }).length;
+
+      final upcoming = exams.where((exam) {
+        if (exam['department'] != widget.department ||
+            exam['level'] != widget.level) {
+          return false;
+        }
+        final start = _parseFlexibleDate((exam['startTime'] ?? '').toString());
+        final end = _parseFlexibleDate((exam['endTime'] ?? '').toString());
+        if (start != null) return start.isAfter(today);
+        if (end != null) return end.isAfter(today);
+        return false;
+      }).length;
+
+      final myAttendance = attendance.cast<Map<String, dynamic>>().firstWhere(
+        (row) => (row['studentCode'] ?? '').toString() == widget.studentCode,
+        orElse: () => <String, dynamic>{},
+      );
+      final attendancePercentage =
+          double.tryParse((myAttendance['percentage'] ?? 0).toString()) ?? 0;
+      final openedSet = opened.toSet();
+      final unopened = materials.where((material) {
+        final id = (material['id'] ?? material['_id'] ?? material['url'] ?? '')
+            .toString();
+        return id.isNotEmpty && !openedSet.contains(id);
+      }).length;
+
+      if (!mounted) return;
+      setState(() {
+        _dueTodayAssignments = dueToday;
+        _upcomingExams = upcoming;
+        _attendancePercentage = attendancePercentage;
+        _unopenedMaterials = unopened;
+        _overviewLoading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _overviewLoading = false);
+    }
+  }
+
+  DateTime? _parseFlexibleDate(String value) {
+    final raw = value.trim();
+    if (raw.isEmpty) return null;
+    final direct = DateTime.tryParse(raw);
+    if (direct != null) return direct;
+    final match = RegExp(
+      r'^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$',
+    ).firstMatch(raw);
+    if (match == null) return null;
+    final first = int.tryParse(match.group(1)!);
+    final second = int.tryParse(match.group(2)!);
+    final year = int.tryParse(match.group(3)!);
+    if (first == null || second == null || year == null) return null;
+    final day = first > 12
+        ? first
+        : second > 12
+        ? second
+        : first;
+    final month = first > 12
+        ? second
+        : second > 12
+        ? first
+        : second;
+    return DateTime(year, month, day);
+  }
+
+  bool _isSameDay(DateTime a, DateTime b) {
+    return a.year == b.year && a.month == b.month && a.day == b.day;
+  }
+
+  Widget _buildStudentOverviewCard() {
+    final theme = Theme.of(context);
+    final latestScore = _latestExamResult == null
+        ? '--'
+        : '${(double.tryParse((_latestExamResult!['score'] ?? 0).toString()) ?? 0).toStringAsFixed(0)}%';
+    final items = [
+      (
+        icon: LucideIcons.clipboardList,
+        label: 'تسليم اليوم',
+        value: '$_dueTodayAssignments',
+      ),
+      (
+        icon: LucideIcons.fileCheck,
+        label: 'امتحانات قادمة',
+        value: '$_upcomingExams',
+      ),
+      (
+        icon: LucideIcons.userCheck,
+        label: 'الحضور',
+        value: '${_attendancePercentage.toStringAsFixed(0)}%',
+      ),
+      (icon: LucideIcons.barChart3, label: 'آخر درجة', value: latestScore),
+      (
+        icon: LucideIcons.fileText,
+        label: 'لم تفتحها',
+        value: '$_unopenedMaterials',
+      ),
+    ];
+
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: theme.dividerColor),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                LucideIcons.layoutDashboard,
+                color: theme.colorScheme.primary,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'لوحة الطالب',
+                  style: GoogleFonts.cairo(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: theme.textTheme.bodyLarge?.color,
+                  ),
+                ),
+              ),
+              IconButton(
+                tooltip: 'تحديث',
+                onPressed: _overviewLoading ? null : _loadStudentOverview,
+                icon: _overviewLoading
+                    ? SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: theme.colorScheme.primary,
+                        ),
+                      )
+                    : const Icon(LucideIcons.refreshCw),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final crossAxisCount = constraints.maxWidth < 640 ? 2 : 5;
+              return GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: items.length,
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: crossAxisCount,
+                  crossAxisSpacing: 10,
+                  mainAxisSpacing: 10,
+                  childAspectRatio: crossAxisCount == 2 ? 1.65 : 1.35,
+                ),
+                itemBuilder: (context, index) {
+                  final item = items[index];
+                  return Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.surfaceContainerHighest
+                          .withValues(alpha: 0.35),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Icon(
+                          item.icon,
+                          color: theme.colorScheme.primary,
+                          size: 20,
+                        ),
+                        Text(
+                          item.value,
+                          style: GoogleFonts.cairo(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 20,
+                            color: theme.textTheme.bodyLarge?.color,
+                          ),
+                        ),
+                        Text(
+                          item.label,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.cairo(
+                            fontSize: 12,
+                            color: theme.textTheme.bodySmall?.color,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              );
+            },
+          ),
+        ],
       ),
     );
   }
@@ -1117,7 +1355,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
                       ),
                     ),
                     TextButton(
-                      onPressed: () => _openUrl(m.url),
+                      onPressed: () => _openUrl(m.url, materialId: m.id),
                       child: Text('فتح', style: GoogleFonts.cairo()),
                     ),
                   ],
@@ -1129,7 +1367,21 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
     );
   }
 
-  Future<void> _openUrl(String url) async {
+  Future<void> _openUrl(String url, {String? materialId}) async {
+    if (materialId != null && materialId.isNotEmpty) {
+      final prefs = await SharedPreferences.getInstance();
+      final opened = (prefs.getStringList(_openedMaterialsKey) ?? <String>[])
+          .toSet();
+      opened.add(materialId);
+      await prefs.setStringList(_openedMaterialsKey, opened.toList());
+      if (mounted) {
+        setState(() {
+          _unopenedMaterials = _dataService.materials
+              .where((material) => !opened.contains(material.id))
+              .length;
+        });
+      }
+    }
     final full = url.startsWith('http') ? url : '$baseUrl$url';
     final uri = Uri.tryParse(full);
     if (uri == null) return;
