@@ -2003,6 +2003,30 @@ class ApiService {
     }
     return null;
   }
+
+  static Future<List<Map<String, dynamic>>> getActiveSessionsForLevel(
+    String levelId,
+  ) async {
+    final sessions = !offlineMode && baseUrl.isNotEmpty
+        ? await _BackendStore.list(
+            'live_sessions',
+            query: {'levelId': levelId, 'active': 'true'},
+          )
+        : await _liveSessions();
+    final now = DateTime.now().millisecondsSinceEpoch;
+    final active = sessions
+        .where((session) {
+          final expiresAt =
+              int.tryParse((session['expiresAt'] ?? 0).toString()) ?? 0;
+          return session['levelId'] == levelId &&
+              session['active'] == true &&
+              expiresAt > now;
+        })
+        .map((session) => Map<String, dynamic>.from(session))
+        .toList();
+    active.sort((a, b) => _compareDesc(a, b, 'startedAt'));
+    return active;
+  }
 }
 
 class _OfflineStore {

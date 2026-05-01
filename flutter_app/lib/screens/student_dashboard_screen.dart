@@ -89,7 +89,6 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
   void _showNotifications() {
     final levelId = '${widget.department}__${widget.level}';
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
     // Mark as read immediately when opening
     _dataService.markNotificationsAsRead(levelId);
@@ -441,9 +440,6 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
   }
 
   Widget _buildLiveLectureCard() {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -504,17 +500,21 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
   }
 
   void _showLiveLectureSelection() async {
-    final theme = Theme.of(context);
-    final subjects = _dataService.materials
-        .map((m) => m.subject)
-        .toSet()
-        .toList();
+    final levelId = '${widget.department}__${widget.level}';
+    List<Map<String, dynamic>> sessions;
+    try {
+      sessions = await ApiService.getActiveSessionsForLevel(levelId);
+    } catch (_) {
+      sessions = [];
+    }
 
-    if (subjects.isEmpty) {
+    if (!mounted) return;
+
+    if (sessions.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'لا توجد محاضرات مجدولة حالياً',
+            'لا توجد محاضرات نشطة حالياً',
             style: GoogleFonts.cairo(),
           ),
         ),
@@ -535,12 +535,22 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
             width: double.maxFinite,
             child: ListView.builder(
               shrinkWrap: true,
-              itemCount: subjects.length,
+              itemCount: sessions.length,
               itemBuilder: (context, index) {
-                final subject = subjects[index];
+                final session = sessions[index];
+                final subject =
+                    (session['subjectId'] ?? session['channelName'] ?? '')
+                        .toString();
+                final code = (session['code'] ?? '').toString();
                 return ListTile(
                   leading: const Icon(LucideIcons.video, color: Colors.red),
                   title: Text(subject, style: GoogleFonts.cairo()),
+                  subtitle: code.isEmpty
+                      ? null
+                      : Text(
+                          'كود المحاضرة: $code',
+                          style: GoogleFonts.cairo(color: Colors.grey),
+                        ),
                   onTap: () {
                     Navigator.pop(context);
                     Navigator.push(
@@ -551,7 +561,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
                           userName: widget.studentName ?? widget.studentCode,
                           isTeacher: false,
                           userId: widget.studentCode,
-                          levelId: '${widget.department}__${widget.level}',
+                          levelId: levelId,
                           subjectId: subject,
                         ),
                       ),
