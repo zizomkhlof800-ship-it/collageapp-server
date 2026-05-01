@@ -586,6 +586,17 @@ class ApiService {
   }
 
   static Future<void> clearAttendanceByLecture(String lectureId) async {
+    if (!offlineMode && baseUrl.isNotEmpty) {
+      final rows = await _BackendStore.list(
+        'attendance',
+        query: {'lectureId': lectureId},
+      );
+      for (final row in rows) {
+        final id = (row['id'] ?? row['_id'] ?? '').toString();
+        if (id.isNotEmpty) await _delete('attendance', id);
+      }
+      return;
+    }
     final rows = await _attendance();
     rows.removeWhere((row) => row['lectureId'] == lectureId);
     await _save('attendance', rows);
@@ -595,6 +606,17 @@ class ApiService {
     String lectureId,
     String studentCode,
   ) async {
+    if (!offlineMode && baseUrl.isNotEmpty) {
+      final rows = await _BackendStore.list(
+        'attendance',
+        query: {'lectureId': lectureId, 'studentCode': studentCode},
+      );
+      for (final row in rows) {
+        final id = (row['id'] ?? row['_id'] ?? '').toString();
+        if (id.isNotEmpty) await _delete('attendance', id);
+      }
+      return;
+    }
     final rows = await _attendance();
     rows.removeWhere((row) {
       return row['lectureId'] == lectureId &&
@@ -608,6 +630,13 @@ class ApiService {
   }
 
   static Future<Map<String, dynamic>> getExamById(String id) async {
+    if (!offlineMode && baseUrl.isNotEmpty) {
+      try {
+        return await _BackendStore.get('exams', id);
+      } catch (_) {
+        return <String, dynamic>{};
+      }
+    }
     final exams = await _exams();
     return exams.firstWhere(
       (exam) => (exam['id'] ?? exam['_id'] ?? '').toString() == id,
@@ -904,7 +933,9 @@ class ApiService {
   }
 
   static Future<List<Map<String, dynamic>>> getLibraryBooks() async {
-    final rows = await _libraryBooks();
+    final rows = !offlineMode && baseUrl.isNotEmpty
+        ? await _BackendStore.list('library')
+        : await _libraryBooks();
     rows.sort((a, b) => _compareDesc(a, b, 'createdAt'));
     return rows;
   }
@@ -1088,7 +1119,7 @@ class ApiService {
       if (level.isNotEmpty) 'level': level,
       if (subject.isNotEmpty) 'subject': subject,
     };
-    final rows = !offlineMode && baseUrl.isNotEmpty && query.isNotEmpty
+    final rows = !offlineMode && baseUrl.isNotEmpty
         ? await _BackendStore.list('materials', query: query)
         : await _materials();
     return rows.where((row) {
@@ -1380,6 +1411,26 @@ class ApiService {
       return {'id': 'admin', 'username': 'admin', 'role': 'admin'};
     }
 
+    if (!offlineMode && baseUrl.isNotEmpty) {
+      try {
+        final teacher = await _BackendStore.get('teachers', id);
+        return {..._normalizeTeacher(teacher), 'role': 'teacher'};
+      } catch (_) {}
+
+      final students = await _BackendStore.list(
+        'students',
+        query: {'studentCode': id},
+      );
+      final student = students.firstWhere(
+        (row) => (row['studentCode'] ?? row['code'] ?? '').toString() == id,
+        orElse: () => <String, dynamic>{},
+      );
+      if (student.isNotEmpty) {
+        return {..._normalizeStudent(student), 'role': 'student'};
+      }
+      return null;
+    }
+
     final teachers = await _teachers();
     for (final teacher in teachers) {
       if ((teacher['id'] ?? '').toString() == id) {
@@ -1400,6 +1451,23 @@ class ApiService {
     String id,
     Map<String, dynamic> payload,
   ) async {
+    if (!offlineMode && baseUrl.isNotEmpty) {
+      final user = await getUser(id);
+      if (user == null) return payload;
+      if (user['role'] == 'teacher') {
+        return _update(
+          'teachers',
+          id,
+          _normalizeTeacher({...payload, 'id': id}),
+        );
+      }
+      return _update(
+        'students',
+        id,
+        _normalizeStudent({...payload, 'studentCode': id}),
+      );
+    }
+
     final teachers = await _teachers();
     final teacherIndex = teachers.indexWhere(
       (row) => (row['id'] ?? '').toString() == id,
@@ -1432,7 +1500,9 @@ class ApiService {
   static Future<void> importStudentsBulk(
     List<Map<String, dynamic>> students,
   ) async {
-    final rows = await _students();
+    final rows = !offlineMode && baseUrl.isNotEmpty
+        ? await _BackendStore.list('students')
+        : await _students();
     for (final item in students) {
       final student = _normalizeStudent(item);
       final code = (student['studentCode'] ?? '').toString();
@@ -1703,7 +1773,7 @@ class ApiService {
       if (level != null && level.isNotEmpty) 'level': level,
       if (type != null && type.isNotEmpty) 'type': type,
     };
-    final rows = !offlineMode && baseUrl.isNotEmpty && query.isNotEmpty
+    final rows = !offlineMode && baseUrl.isNotEmpty
         ? await _BackendStore.list('question_bank', query: query)
         : await _questionBank();
     return rows.where((row) {
@@ -2252,6 +2322,18 @@ class _BackendStore {
         .whereType<Map>()
         .map((row) => row.map((key, value) => MapEntry(key.toString(), value)))
         .toList();
+  }
+
+  static Future<Map<String, dynamic>> get(String name, String id) async {
+    final response = await http
+        .get(Uri.parse('$baseUrl/api/$name/$id'))
+        .timeout(_timeout);
+    _throwIfBad(response);
+    final decoded = jsonDecode(response.body);
+    if (decoded is Map) {
+      return decoded.map((key, value) => MapEntry(key.toString(), value));
+    }
+    return <String, dynamic>{};
   }
 
   static Future<void> save(String name, List<Map<String, dynamic>> rows) async {

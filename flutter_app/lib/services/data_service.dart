@@ -855,6 +855,7 @@ class DataService {
       await fetchSchedules(department: item.department, level: item.level);
     } catch (e) {
       debugPrint("Error adding schedule: $e");
+      rethrow;
     }
   }
 
@@ -879,6 +880,7 @@ class DataService {
       await fetchSchedules(department: department, level: level);
     } catch (e) {
       debugPrint("Error updating schedule item: $e");
+      rethrow;
     }
   }
 
