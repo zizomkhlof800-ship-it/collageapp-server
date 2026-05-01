@@ -327,7 +327,7 @@ class _ManageTeachersScreenState extends State<ManageTeachersScreen> {
                     );
                   }
                 } catch (e) {
-                  _showErrorSnackBar('تعذر حفظ بيانات المعلم');
+                  _showErrorSnackBar('تعذر حفظ بيانات المعلم: $e');
                 }
               },
               child: Text(

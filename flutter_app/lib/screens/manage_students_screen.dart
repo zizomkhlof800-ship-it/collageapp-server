@@ -196,12 +196,12 @@ class _ManageStudentsScreenState extends State<ManageStudentsScreen> {
           'level': result.level,
         });
         await _loadStudents();
-      } catch (_) {
+      } catch (error) {
         try {
           final state = await ApiService.dbHealthState();
           final msg = (state == null || state != 1)
               ? 'تعذر حفظ الطالب: قاعدة البيانات غير جاهزة'
-              : 'تعذر حفظ الطالب على الخادم';
+              : 'تعذر حفظ الطالب على الخادم: $error';
           messenger.showSnackBar(
             SnackBar(
               content: Text(

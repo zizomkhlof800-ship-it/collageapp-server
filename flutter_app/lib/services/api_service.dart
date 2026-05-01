@@ -1332,7 +1332,9 @@ class ApiService {
   }
 
   static Future<List<Map<String, dynamic>>> getTeachers() async {
-    final rows = await _teachers();
+    final rows = !offlineMode && baseUrl.isNotEmpty
+        ? await _BackendStore.list('teachers')
+        : await _teachers();
     return rows.map(_normalizeTeacher).toList();
   }
 
@@ -1455,7 +1457,7 @@ class ApiService {
       if (department != null && department.isNotEmpty) 'department': department,
       if (level != null && level.isNotEmpty) 'level': level,
     };
-    final rows = !offlineMode && baseUrl.isNotEmpty && query.isNotEmpty
+    final rows = !offlineMode && baseUrl.isNotEmpty
         ? await _BackendStore.list('students', query: query)
         : await _students();
     return rows
@@ -2232,7 +2234,7 @@ class _OfflineStore {
 }
 
 class _BackendStore {
-  static const Duration _timeout = Duration(seconds: 12);
+  static const Duration _timeout = Duration(seconds: 30);
 
   static Future<List<Map<String, dynamic>>> list(
     String name, {
